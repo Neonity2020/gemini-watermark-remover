@@ -9,8 +9,20 @@
   },
   "license": "MIT",
   "type": "module",
+  "types": "./src/sdk/index.d.ts",
   "exports": {
-    ".": "./src/sdk/index.js"
+    ".": {
+      "types": "./src/sdk/index.d.ts",
+      "import": "./src/sdk/index.js"
+    },
+    "./browser": {
+      "types": "./src/sdk/browser.d.ts",
+      "import": "./src/sdk/browser.js"
+    },
+    "./image-data": {
+      "types": "./src/sdk/image-data.d.ts",
+      "import": "./src/sdk/image-data.js"
+    }
   },
   "scripts": {
     "dev": "node build.js",
