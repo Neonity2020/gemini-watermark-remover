@@ -882,6 +882,59 @@ test('processPageImageSource should treat blob page images as preview-fast rende
   ]);
 });
 
+test('processPageImageSource should treat explicitly bound Gemini preview urls as original-quality sources', async () => {
+  const sourceUrl = 'https://lh3.googleusercontent.com/gg/example-token=s1024-rj';
+  const originalBlob = new Blob(['background'], { type: 'image/jpeg' });
+  const processedBlob = new Blob(['processed'], { type: 'image/png' });
+  const imageElement = {
+    dataset: {
+      gwrSourceUrl: sourceUrl
+    }
+  };
+  const calls = [];
+
+  const result = await processPageImageSource({
+    sourceUrl,
+    imageElement,
+    fetchPreviewBlob: async () => {
+      calls.push('preview-fetch');
+      throw new Error('preview fetch should not run for bound original sources');
+    },
+    fetchBlobFromBackgroundImpl: async (url, fallbackFetchBlob) => {
+      calls.push(['background', url, typeof fallbackFetchBlob]);
+      return originalBlob;
+    },
+    fetchBlobDirectImpl: async () => {
+      calls.push('direct-fetch');
+      throw new Error('direct fetch should not run');
+    },
+    captureRenderedImageBlob: async () => {
+      calls.push('capture');
+      throw new Error('rendered capture should not run');
+    },
+    validateBlob: async (blob) => {
+      calls.push(['validate', blob]);
+      return { width: 1024, height: 1024 };
+    },
+    processWatermarkBlobImpl: async () => {
+      calls.push('preview-process');
+      throw new Error('preview-fast processing should not run');
+    },
+    removeWatermarkFromBlobImpl: async (blob) => {
+      calls.push(['remove', blob]);
+      return processedBlob;
+    }
+  });
+
+  assert.equal(result.skipped, false);
+  assert.equal(result.processedBlob, processedBlob);
+  assert.deepEqual(calls, [
+    ['background', 'https://lh3.googleusercontent.com/gg/example-token=s0-rj', 'function'],
+    ['validate', originalBlob],
+    ['remove', originalBlob]
+  ]);
+});
+
 test('preparePageImageProcessing should skip ready image with unchanged source', async () => {
   await withPageImageTestEnv(async ({ MockHTMLImageElement }) => {
     const image = new MockHTMLImageElement();
@@ -969,6 +1022,26 @@ test('preparePageImageProcessing should reset previous processed state and retur
     assert.deepEqual(hiddenImages, [[image, { removeImmediately: true }]]);
     assert.deepEqual(revokedUrls, ['blob:mock:old-processed']);
     assert.deepEqual(shownImages, [image]);
+  });
+});
+
+test('preparePageImageProcessing should mark explicitly bound Gemini preview urls as non-preview work', async () => {
+  await withPageImageTestEnv(async ({ MockHTMLImageElement }) => {
+    const sourceUrl = 'https://lh3.googleusercontent.com/gg/example-token=s1024-rj';
+    const image = new MockHTMLImageElement();
+    image.dataset = {
+      gwrSourceUrl: sourceUrl
+    };
+    image.style = {};
+
+    const result = preparePageImageProcessing(image, {
+      HTMLImageElementClass: MockHTMLImageElement,
+      isProcessableImage: () => true,
+      resolveSourceUrl: () => sourceUrl
+    });
+
+    assert.equal(result?.sourceUrl, sourceUrl);
+    assert.equal(result?.isPreviewSource, false);
   });
 });
 
@@ -1218,9 +1291,9 @@ test('createPageImageReplacementController should apply successful helper result
     assert.equal(container.children[0].style.backgroundImage, `url(\"blob:mock:${previewBlob.size}\")`);
     assert.deepEqual(
       logs.map(([type]) => type),
-      ['page-image-process-start', 'page-image-process-strategy', 'page-image-process-success']
+      ['page-image-process-start', 'page-image-process-success']
     );
-    assert.equal(logs[2][1].strategy, 'page-fetch');
+    assert.equal(logs[1][1].strategy, 'page-fetch');
   });
 });
 
@@ -1448,9 +1521,9 @@ test('createPageImageReplacementController should apply skipped helper result wi
     assert.equal(image.src, 'https://lh3.googleusercontent.com/gg/example-token=s1024-rj');
     assert.deepEqual(
       logs.map(([type]) => type),
-      ['page-image-process-start', 'page-image-process-strategy', 'page-image-process-skipped']
+      ['page-image-process-start', 'page-image-process-skipped']
     );
-    assert.equal(logs[2][1].reason, 'preview-fetch-unavailable');
+    assert.equal(logs[1][1].reason, 'preview-fetch-unavailable');
   });
 });
 

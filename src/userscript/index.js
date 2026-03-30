@@ -2,7 +2,11 @@ import {
   bindOriginalAssetUrlToImages,
   installPageImageReplacement
 } from '../shared/pageImageReplacement.js';
-import { extractGeminiImageAssetIds } from '../shared/domAdapter.js';
+import {
+  extractGeminiImageAssetIds,
+  getGeminiImageQuerySelector
+} from '../shared/domAdapter.js';
+import { installGeminiClipboardImageHook } from './clipboardHook.js';
 import {
   createGeminiDownloadIntentGate,
   createGeminiDownloadRpcFetchHook,
@@ -39,6 +43,61 @@ function shouldSkipFrame(targetWindow) {
   } catch {
     return false;
   }
+}
+
+function assetIdsMatch(candidate = null, target = null) {
+  if (!candidate || !target) {
+    return false;
+  }
+
+  if (candidate.draftId && target.draftId) {
+    return candidate.draftId === target.draftId;
+  }
+
+  return Boolean(
+    candidate.responseId
+      && target.responseId
+      && candidate.responseId === target.responseId
+      && candidate.conversationId
+      && target.conversationId
+      && candidate.conversationId === target.conversationId
+  );
+}
+
+function findGeminiImageElementForAssetIds(root, assetIds) {
+  if (!root || !assetIds || typeof root.querySelectorAll !== 'function') {
+    return null;
+  }
+
+  for (const imageElement of root.querySelectorAll(getGeminiImageQuerySelector())) {
+    if (assetIdsMatch(extractGeminiImageAssetIds(imageElement), assetIds)) {
+      return imageElement;
+    }
+  }
+
+  return null;
+}
+
+function findNearbyGeminiImageElement(targetWindow, target, assetIds) {
+  const buttonLike = typeof target?.closest === 'function'
+    ? target.closest('button,[role="button"]')
+    : null;
+  const candidateRoots = [
+    buttonLike?.closest?.('generated-image,.generated-image-container'),
+    buttonLike?.closest?.('single-image'),
+    buttonLike?.closest?.('[data-test-draft-id]')
+  ].filter(Boolean);
+
+  for (const root of candidateRoots) {
+    const imageElement = typeof root?.querySelector === 'function'
+      ? root.querySelector('img')
+      : null;
+    if (imageElement) {
+      return imageElement;
+    }
+  }
+
+  return findGeminiImageElementForAssetIds(targetWindow?.document || document, assetIds);
 }
 
 (async function init() {
@@ -86,9 +145,13 @@ function shouldSkipFrame(targetWindow) {
     };
     const downloadIntentGate = createGeminiDownloadIntentGate({
       targetWindow,
-      resolveMetadata: (target) => ({
-        assetIds: extractGeminiImageAssetIds(target)
-      })
+      resolveMetadata: (target) => {
+        const assetIds = extractGeminiImageAssetIds(target);
+        return {
+          assetIds,
+          imageElement: findNearbyGeminiImageElement(targetWindow, target, assetIds)
+        };
+      }
     });
     const downloadRpcFetch = createGeminiDownloadRpcFetchHook({
       originalFetch: targetWindow.fetch.bind(targetWindow),
@@ -129,6 +192,15 @@ function shouldSkipFrame(targetWindow) {
       },
       logger: console
     });
+    const disposeClipboardHook = installGeminiClipboardImageHook(targetWindow, {
+      getIntentMetadata: () => downloadIntentGate.getRecentIntentMetadata(),
+      resolveImageElement: (intentMetadata) => findNearbyGeminiImageElement(
+        targetWindow,
+        null,
+        intentMetadata?.assetIds || null
+      ),
+      logger: console
+    });
     await requestGeminiConversationHistoryBindings({
       targetWindow,
       fetchImpl: targetWindow.fetch.bind(targetWindow),
@@ -163,6 +235,7 @@ function shouldSkipFrame(targetWindow) {
 
     window.addEventListener('beforeunload', () => {
       pageImageReplacementController?.dispose?.();
+      disposeClipboardHook();
       downloadIntentGate.dispose();
       processingRuntime.dispose('beforeunload');
     });

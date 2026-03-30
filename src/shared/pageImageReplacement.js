@@ -53,6 +53,26 @@ function isBlobPageImageSource(sourceUrl = '') {
   return typeof sourceUrl === 'string' && sourceUrl.startsWith('blob:');
 }
 
+function hasExplicitBoundSourceUrl(imageElement, sourceUrl = '') {
+  const explicitSourceUrl = typeof imageElement?.dataset?.gwrSourceUrl === 'string'
+    ? imageElement.dataset.gwrSourceUrl.trim()
+    : '';
+  const normalizedSourceUrl = typeof sourceUrl === 'string' ? sourceUrl.trim() : '';
+  return Boolean(explicitSourceUrl && normalizedSourceUrl && explicitSourceUrl === normalizedSourceUrl);
+}
+
+function shouldTreatPageImageSourceAsPreview(imageElement, sourceUrl = '') {
+  if (isBlobPageImageSource(sourceUrl)) {
+    return true;
+  }
+
+  if (!isGeminiPreviewAssetUrl(sourceUrl)) {
+    return false;
+  }
+
+  return !hasExplicitBoundSourceUrl(imageElement, sourceUrl);
+}
+
 function emitPageImageProcessEvent({
   logger,
   onLog,
@@ -766,7 +786,8 @@ export async function processPageImageSource({
   validateBlob = loadImageFromBlob,
   fetchBlobFromBackgroundImpl = fetchBlobFromBackground
 }) {
-  if (isGeminiPreviewAssetUrl(sourceUrl) || isBlobPageImageSource(sourceUrl)) {
+  const treatAsPreviewSource = shouldTreatPageImageSourceAsPreview(imageElement, sourceUrl);
+  if (treatAsPreviewSource) {
     return processPreviewPageImageSource({
       sourceUrl,
       imageElement,
@@ -784,7 +805,8 @@ export async function processPageImageSource({
     captureRenderedImageBlob,
     fetchBlobDirectImpl,
     validateBlob,
-    fetchBlobFromBackgroundImpl
+    fetchBlobFromBackgroundImpl,
+    preferRenderedCaptureForPreview: isGeminiPreviewAssetUrl(sourceUrl) && !hasExplicitBoundSourceUrl(imageElement, sourceUrl)
   });
 }
 
@@ -1353,7 +1375,7 @@ export function preparePageImageProcessing(imageElement, {
   return {
     sourceUrl,
     normalizedUrl: normalizeGoogleusercontentImageUrl(sourceUrl),
-    isPreviewSource: isGeminiPreviewAssetUrl(sourceUrl) || isBlobPageImageSource(sourceUrl),
+    isPreviewSource: shouldTreatPageImageSourceAsPreview(imageElement, sourceUrl),
     assetIds: {
       responseId: assetIds?.responseId || null,
       draftId: assetIds?.draftId || null,
