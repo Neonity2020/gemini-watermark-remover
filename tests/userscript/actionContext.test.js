@@ -150,9 +150,16 @@ test('createGeminiActionContextResolver should prefer the store-attached process
     conversationId: 'c_store_preferred_element'
   });
   imageSessionStore.updateProcessedResult(sessionKey, {
+    slot: 'preview',
     objectUrl: 'blob:https://gemini.google.com/store-preferred-processed',
     blobType: 'image/png',
     processedFrom: 'page-fetch'
+  });
+  imageSessionStore.updateProcessedResult(sessionKey, {
+    slot: 'full',
+    objectUrl: 'blob:https://gemini.google.com/store-preferred-full',
+    blobType: 'image/png',
+    processedFrom: 'original-download'
   });
 
   const previewImage = createImageElement({
@@ -204,5 +211,5 @@ test('createGeminiActionContextResolver should prefer the store-attached process
 
   assert.equal(context.imageElement, previewImage);
   assert.equal(context.sessionKey, 'draft:rc_store_preferred_element');
-  assert.equal(context.resource?.slot, 'preview');
+  assert.equal(context.resource?.slot, 'full');
 });

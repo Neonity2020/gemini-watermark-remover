@@ -188,6 +188,24 @@ function syncLegacyProcessedFields(session) {
   session.derived.processedFrom = preferredResource?.source || '';
 }
 
+function buildOriginalResource(session) {
+  if (!session?.sources?.originalUrl) {
+    return null;
+  }
+
+  return {
+    kind: 'original',
+    url: session.sources.originalUrl,
+    mimeType: '',
+    processedMeta: null,
+    source: 'original'
+  };
+}
+
+function isFullQualityAction(action = '') {
+  return action === 'clipboard' || action === 'download';
+}
+
 export function createImageSessionStore({
   now = () => Date.now()
 } = {}) {
@@ -347,41 +365,31 @@ export function createImageSessionStore({
       return null;
     }
 
-    if (action === 'download') {
-      const fullProcessedResource = readProcessedSlotResource(session, 'full');
+    const fullProcessedResource = readProcessedSlotResource(session, 'full');
+    const previewProcessedResource = readProcessedSlotResource(session, 'preview');
+
+    if (isFullQualityAction(action)) {
+      if (fullProcessedResource) {
+        return fullProcessedResource;
+      }
+
+      const originalResource = buildOriginalResource(session);
+      if (originalResource) {
+        return originalResource;
+      }
+    } else {
+      if (previewProcessedResource) {
+        return previewProcessedResource;
+      }
+
       if (fullProcessedResource) {
         return fullProcessedResource;
       }
     }
 
-    const previewProcessedResource = readProcessedSlotResource(session, 'preview');
-    if (previewProcessedResource) {
-      return previewProcessedResource;
-    }
-
-    const fullProcessedResource = readProcessedSlotResource(session, 'full');
-    if (fullProcessedResource) {
-      return fullProcessedResource;
-    }
-
-    if (action === 'download' && session.sources.originalUrl) {
-      return {
-        kind: 'original',
-        url: session.sources.originalUrl,
-        mimeType: '',
-        processedMeta: null,
-        source: 'original'
-      };
-    }
-
-    if (session.sources.originalUrl) {
-      return {
-        kind: 'original',
-        url: session.sources.originalUrl,
-        mimeType: '',
-        processedMeta: null,
-        source: 'original'
-      };
+    const originalResource = buildOriginalResource(session);
+    if (originalResource) {
+      return originalResource;
     }
 
     if (session.sources.previewUrl) {

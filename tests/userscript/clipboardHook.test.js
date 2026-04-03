@@ -166,6 +166,61 @@ test('installGeminiClipboardImageHook should reject Gemini copy actions when onl
   dispose();
 });
 
+test('installGeminiClipboardImageHook should notify action-critical failures before rejecting Gemini copy actions', async () => {
+  const originalItem = new MockClipboardItem({
+    'image/jpeg': new Blob(['original'], { type: 'image/jpeg' })
+  });
+  const imageSessionStore = createImageSessionStore({
+    now: () => 123456
+  });
+  const sessionKey = imageSessionStore.getOrCreateByAssetIds({
+    responseId: 'r_clipboard_notice',
+    draftId: 'rc_clipboard_notice',
+    conversationId: 'c_clipboard_notice'
+  });
+  imageSessionStore.updateOriginalSource(sessionKey, 'https://lh3.googleusercontent.com/rd-gg/clipboard-notice=s0-rp');
+
+  const clipboard = {
+    async write() {
+      throw new Error('clipboard write should not be called when Gemini copy processing fails');
+    }
+  };
+  const targetWindow = {
+    navigator: { clipboard },
+    ClipboardItem: MockClipboardItem
+  };
+
+  let seenPayload = null;
+  const dispose = installGeminiClipboardImageHook(targetWindow, {
+    imageSessionStore,
+    getActionContext: () => ({
+      action: 'clipboard',
+      sessionKey,
+      assetIds: {
+        draftId: 'rc_clipboard_notice'
+      }
+    }),
+    onActionCriticalFailure: async (payload) => {
+      seenPayload = {
+        message: payload.error?.message || '',
+        sessionKey: payload.actionContext?.sessionKey
+      };
+    },
+    logger: { warn() {} }
+  });
+
+  await assert.rejects(
+    clipboard.write([originalItem]),
+    /Original image is unavailable for clipboard processing/
+  );
+  assert.deepEqual(seenPayload, {
+    message: 'Original image is unavailable for clipboard processing',
+    sessionKey
+  });
+
+  dispose();
+});
+
 test('installGeminiClipboardImageHook should resolve blob object urls through image decoding instead of fetch', async () => {
   const writtenItems = [];
   const processedBlob = new Blob(['processed-from-image'], { type: 'image/png' });
@@ -225,6 +280,7 @@ test('installGeminiClipboardImageHook should resolve the processed blob from the
     conversationId: 'c_clipboard_session'
   });
   imageSessionStore.updateProcessedResult(sessionKey, {
+    slot: 'full',
     objectUrl: 'blob:https://gemini.google.com/session-processed',
     blobType: 'image/png',
     processedFrom: 'page-fetch'

@@ -10,6 +10,8 @@ import {
 
 test('userscript entry should install download hooks while keeping preview replacement disabled by default', () => {
   const source = loadModuleSource('../../src/userscript/index.js', import.meta.url);
+  const installDownloadHookCall = normalizeWhitespace(getCallSource(source, 'installGeminiDownloadHook'));
+  const clipboardHookCall = normalizeWhitespace(getCallSource(source, 'installGeminiClipboardImageHook'));
 
   assert.equal(hasImportedBinding(source, './downloadHook.js', 'installGeminiDownloadHook'), true);
   assert.equal(hasImportedBinding(source, './downloadHook.js', 'createGeminiDownloadRpcFetchHook'), true);
@@ -20,14 +22,19 @@ test('userscript entry should install download hooks while keeping preview repla
   assert.equal(hasImportedBinding(source, './actionContext.js', 'createGeminiActionContextResolver'), true);
   assert.equal(hasImportedBinding(source, './historyBindingBootstrap.js', 'requestGeminiConversationHistoryBindings'), true);
   assert.equal(hasImportedBinding(source, './processBridge.js', 'installUserscriptProcessBridge'), true);
+  assert.equal(hasImportedBinding(source, './userNotice.js', 'showUserNotice'), true);
+  assert.equal(hasImportedBinding(source, './userNotice.js', 'GWR_ORIGINAL_ASSET_REFRESH_MESSAGE'), true);
    assert.equal(hasImportedBinding(source, './pageProcessBridge.js', 'createPageProcessBridgeClient'), true);
    assert.equal(hasImportedBinding(source, './pageProcessorRuntime.js', 'installInjectedPageProcessorRuntime'), true);
   assert.equal(hasImportedBinding(source, './downloadClick.js', 'installGeminiDownloadClickHandler'), false);
   assert.match(normalizeWhitespace(source), /function isPreviewReplacementEnabled\(targetWindow\)/);
+  assert.match(normalizeWhitespace(source), /const handleActionCriticalFailure = \(\) => \{ showUserNotice\(targetWindow,\s*GWR_ORIGINAL_ASSET_REFRESH_MESSAGE\); \}/);
   assert.match(
     normalizeWhitespace(source),
     /const pageImageReplacementController = isPreviewReplacementEnabled\(targetWindow\)\s*\?\s*installPageImageReplacement\(/
   );
+  assert.match(installDownloadHookCall, /onActionCriticalFailure:\s*handleActionCriticalFailure/);
+  assert.match(clipboardHookCall, /onActionCriticalFailure:\s*handleActionCriticalFailure/);
 });
 
 test('userscript entry should skip initialization inside nested frames', () => {

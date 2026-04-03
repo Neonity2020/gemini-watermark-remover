@@ -26,6 +26,10 @@ import {
 import { installInjectedPageProcessorRuntime } from './pageProcessorRuntime.js';
 import { createUserscriptProcessingRuntime } from './processingRuntime.js';
 import {
+  GWR_ORIGINAL_ASSET_REFRESH_MESSAGE,
+  showUserNotice
+} from './userNotice.js';
+import {
   isGeminiOriginalAssetUrl,
   normalizeGoogleusercontentImageUrl
 } from './urlUtils.js';
@@ -40,6 +44,14 @@ function shouldSkipFrame(targetWindow) {
   }
   try {
     return targetWindow.top && targetWindow.top !== targetWindow.self;
+  } catch {
+    return false;
+  }
+}
+
+function isPreviewReplacementEnabled(targetWindow) {
+  try {
+    return targetWindow?.localStorage?.getItem('__gwr_enable_preview_replacement__') === '1';
   } catch {
     return false;
   }
@@ -101,6 +113,44 @@ function shouldSkipFrame(targetWindow) {
         normalizedUrl: payload?.discoveredUrl || ''
       });
     };
+    const handleActionCriticalFailure = () => {
+      showUserNotice(targetWindow, GWR_ORIGINAL_ASSET_REFRESH_MESSAGE);
+    };
+    const handleProcessedBlobResolved = (payload = {}) => {
+      const resolvedActionContext = resolveCompatibleActionContextFromPayload(payload);
+      const processedBlob = payload?.processedBlob instanceof Blob
+        ? payload.processedBlob
+        : null;
+      const sessionKey = (
+        typeof resolvedActionContext?.sessionKey === 'string'
+          ? resolvedActionContext.sessionKey.trim()
+          : ''
+      ) || imageSessionStore.getOrCreateByAssetIds(resolvedActionContext?.assetIds);
+      const urlApi = targetWindow?.URL || globalThis.URL;
+      if (!processedBlob || !sessionKey || typeof urlApi?.createObjectURL !== 'function') {
+        return;
+      }
+
+      const previousFullObjectUrl = imageSessionStore.getSnapshot(sessionKey)?.derived?.processedSlots?.full?.objectUrl || '';
+      const nextObjectUrl = urlApi.createObjectURL(processedBlob);
+      if (
+        previousFullObjectUrl
+        && previousFullObjectUrl !== nextObjectUrl
+        && typeof urlApi?.revokeObjectURL === 'function'
+      ) {
+        urlApi.revokeObjectURL(previousFullObjectUrl);
+      }
+
+      imageSessionStore.updateProcessedResult(sessionKey, {
+        slot: 'full',
+        objectUrl: nextObjectUrl,
+        blob: processedBlob,
+        blobType: processedBlob.type || 'image/png',
+        processedFrom: resolvedActionContext?.action === 'clipboard'
+          ? 'original-clipboard'
+          : 'original-download'
+      });
+    };
     const downloadIntentGate = createGeminiDownloadIntentGate({
       targetWindow,
       resolveActionContext: (target) => {
@@ -139,11 +189,14 @@ function shouldSkipFrame(targetWindow) {
       normalizeUrl: normalizeGoogleusercontentImageUrl,
       processBlob: removeWatermarkFromBestAvailablePath,
       onOriginalAssetDiscovered: handleOriginalAssetDiscovered,
+      onProcessedBlobResolved: handleProcessedBlobResolved,
+      onActionCriticalFailure: handleActionCriticalFailure,
       logger: console
     });
     const disposeClipboardHook = installGeminiClipboardImageHook(targetWindow, {
       getActionContext: () => downloadIntentGate.getRecentActionContext(),
       imageSessionStore: imageSessionStore,
+      onActionCriticalFailure: handleActionCriticalFailure,
       resolveImageElement: (actionContext) => actionContextResolver.resolveImageElement(actionContext),
       logger: console
     });
@@ -172,13 +225,15 @@ function shouldSkipFrame(targetWindow) {
       logger: console
     });
 
-    const pageImageReplacementController = installPageImageReplacement({
-      imageSessionStore: imageSessionStore,
-      logger: console,
-      fetchPreviewBlob: previewBlobFetcher,
-      processWatermarkBlobImpl: pageProcessClient.processWatermarkBlob,
-      removeWatermarkFromBlobImpl: pageProcessClient.removeWatermarkFromBlob
-    });
+    const pageImageReplacementController = isPreviewReplacementEnabled(targetWindow)
+      ? installPageImageReplacement({
+        imageSessionStore: imageSessionStore,
+        logger: console,
+        fetchPreviewBlob: previewBlobFetcher,
+        processWatermarkBlobImpl: pageProcessClient.processWatermarkBlob,
+        removeWatermarkFromBlobImpl: pageProcessClient.removeWatermarkFromBlob
+      })
+      : null;
 
     window.addEventListener('beforeunload', () => {
       pageImageReplacementController?.dispose?.();

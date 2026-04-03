@@ -10,6 +10,45 @@ function isBlobUrl(url) {
   return typeof url === 'string' && /^blob:/i.test(url);
 }
 
+function hasClipboardImageItems(items) {
+  return Array.from(items || []).some((item) => (
+    Array.isArray(item?.types) && item.types.some(isImageMimeType)
+  ));
+}
+
+function isGeminiClipboardActionContext(actionContext) {
+  if (!actionContext || typeof actionContext !== 'object') {
+    return false;
+  }
+
+  if (actionContext.action === 'clipboard') {
+    return true;
+  }
+
+  if (typeof actionContext.sessionKey === 'string' && actionContext.sessionKey.trim()) {
+    return true;
+  }
+
+  const assetIds = actionContext.assetIds;
+  return Boolean(
+    assetIds
+      && typeof assetIds === 'object'
+      && (assetIds.responseId || assetIds.draftId || assetIds.conversationId)
+  );
+}
+
+async function notifyActionCriticalFailure(onActionCriticalFailure, payload) {
+  if (typeof onActionCriticalFailure !== 'function') {
+    return;
+  }
+
+  try {
+    await onActionCriticalFailure(payload);
+  } catch {
+    // User notice failures must not mask the primary clipboard error.
+  }
+}
+
 function canvasToBlob(canvas, type = 'image/png') {
   return new Promise((resolve, reject) => {
     if (!canvas || typeof canvas.toBlob !== 'function') {
@@ -96,7 +135,8 @@ async function resolveProcessedClipboardBlob({
   resolveImageElement,
   imageSessionStore = getDefaultImageSessionStore(),
   fetchBlobDirect,
-  resolveBlobViaImageElement
+  resolveBlobViaImageElement,
+  requireFullProcessedResource = false
 }) {
   const sessionContext = resolveImageSessionContext({
     action: 'clipboard',
@@ -112,12 +152,21 @@ async function resolveProcessedClipboardBlob({
   if (sessionBlob) {
     return sessionBlob;
   }
-  const resourceUrl = sessionContext?.resource?.kind === 'processed'
+
+  const processedResource = sessionContext?.resource?.kind === 'processed'
+    ? sessionContext.resource
+    : null;
+  if (requireFullProcessedResource && !processedResource) {
+    return null;
+  }
+
+  const resourceUrl = processedResource
     && typeof sessionContext.resource.url === 'string'
     ? sessionContext.resource.url.trim()
     : '';
   const objectUrl = resourceUrl || (
-    typeof imageElement?.dataset?.gwrWatermarkObjectUrl === 'string'
+    !requireFullProcessedResource
+    && typeof imageElement?.dataset?.gwrWatermarkObjectUrl === 'string'
       ? imageElement.dataset.gwrWatermarkObjectUrl.trim()
       : ''
   );
@@ -150,6 +199,7 @@ export function installGeminiClipboardImageHook(targetWindow, {
   getActionContext = () => null,
   resolveImageElement = null,
   imageSessionStore = getDefaultImageSessionStore(),
+  onActionCriticalFailure = null,
   fetchBlobDirect = async (url) => {
     const response = await fetch(url);
     return response.blob();
@@ -171,16 +221,28 @@ export function installGeminiClipboardImageHook(targetWindow, {
     : createActionContextProvider({ getActionContext });
 
   const hookedWrite = async function gwrClipboardWriteHook(items) {
+    const actionContext = resolveActionContextProvider();
+    const containsImageItems = hasClipboardImageItems(items);
+    const requiresOriginalGeminiBlob = containsImageItems
+      && isGeminiClipboardActionContext(actionContext);
+
     try {
-      const actionContext = resolveActionContextProvider();
+      if (!containsImageItems) {
+        return originalWrite(items);
+      }
+
       const processedBlob = await resolveProcessedClipboardBlob({
         actionContext,
         resolveImageElement,
         imageSessionStore,
         fetchBlobDirect,
-        resolveBlobViaImageElement
+        resolveBlobViaImageElement,
+        requireFullProcessedResource: requiresOriginalGeminiBlob
       });
       if (!processedBlob) {
+        if (requiresOriginalGeminiBlob) {
+          throw new Error('Original image is unavailable for clipboard processing');
+        }
         return originalWrite(items);
       }
 
@@ -192,6 +254,14 @@ export function installGeminiClipboardImageHook(targetWindow, {
       return originalWrite(replacementItems);
     } catch (error) {
       logger?.warn?.('[Gemini Watermark Remover] Clipboard image hook failed, falling back:', error);
+      if (requiresOriginalGeminiBlob) {
+        await notifyActionCriticalFailure(onActionCriticalFailure, {
+          error,
+          actionContext,
+          items
+        });
+        throw error;
+      }
       return originalWrite(items);
     }
   };

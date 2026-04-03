@@ -153,6 +153,48 @@ test('createGeminiDownloadFetchHook should reject the request when processing fa
   );
 });
 
+test('createGeminiDownloadFetchHook should notify action-critical failures before rejecting', async () => {
+  const originalFetch = async () => new Response(new Blob(['original'], { type: 'image/png' }), {
+    status: 200,
+    headers: { 'content-type': 'image/png' }
+  });
+
+  let seenPayload = null;
+  const hook = createGeminiDownloadFetchHook({
+    originalFetch,
+    isTargetUrl: () => true,
+    normalizeUrl: () => 'https://lh3.googleusercontent.com/rd-gg/token=s0',
+    provideActionContext: () => ({
+      action: 'download',
+      sessionKey: 'draft:rc_download_failure_notice',
+      assetIds: {
+        draftId: 'rc_download_failure_notice'
+      }
+    }),
+    onActionCriticalFailure: async (payload) => {
+      seenPayload = {
+        message: payload.error?.message || '',
+        normalizedUrl: payload.normalizedUrl,
+        sessionKey: payload.actionContext?.sessionKey
+      };
+    },
+    logger: { warn() {} },
+    processBlob: async () => {
+      throw new Error('boom');
+    }
+  });
+
+  await assert.rejects(
+    hook('https://lh3.googleusercontent.com/rd-gg/token=s1024'),
+    /boom/
+  );
+  assert.deepEqual(seenPayload, {
+    message: 'boom',
+    normalizedUrl: 'https://lh3.googleusercontent.com/rd-gg/token=s0',
+    sessionKey: 'draft:rc_download_failure_notice'
+  });
+});
+
 test('createGeminiDownloadFetchHook should notify when a processed full-quality blob is produced', async () => {
   const originalFetch = async () => new Response(new Blob(['original'], { type: 'image/png' }), {
     status: 200,

@@ -29,9 +29,10 @@ test('resolveImageSessionContext should merge action asset ids and return the pr
     conversationId: 'c_context_example'
   });
   imageSessionStore.updateProcessedResult(sessionKey, {
+    slot: 'full',
     objectUrl: 'blob:https://gemini.google.com/context-processed',
     blobType: 'image/png',
-    processedFrom: 'page-fetch'
+    processedFrom: 'original-download'
   });
 
   const resolvedImageElement = {
@@ -64,8 +65,8 @@ test('resolveImageSessionContext should merge action asset ids and return the pr
     url: 'blob:https://gemini.google.com/context-processed',
     mimeType: 'image/png',
     processedMeta: null,
-    source: 'page-fetch',
-    slot: 'preview'
+    source: 'original-download',
+    slot: 'full'
   });
 });
 

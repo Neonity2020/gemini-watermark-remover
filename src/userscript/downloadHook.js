@@ -122,6 +122,18 @@ function shouldReuseProcessedDownloadResource(actionContext) {
     && actionContext.resource.blob instanceof Blob;
 }
 
+async function notifyActionCriticalFailure(onActionCriticalFailure, payload) {
+  if (typeof onActionCriticalFailure !== 'function') {
+    return;
+  }
+
+  try {
+    await onActionCriticalFailure(payload);
+  } catch {
+    // User notice failures must not mask the primary action-critical error.
+  }
+}
+
 const DOWNLOAD_ACTION_LABEL_PATTERN = /(download|copy|下载|复制)/i;
 const COPY_ACTION_LABEL_PATTERN = /(copy|复制)/i;
 const EXPLICIT_DOWNLOAD_ACTION_LABEL_PATTERN = /(download|下载)/i;
@@ -969,6 +981,8 @@ export function createGeminiDownloadFetchHook({
   provideActionContext = null,
   getActionContext = () => null,
   onOriginalAssetDiscovered = null,
+  onProcessedBlobResolved = null,
+  onActionCriticalFailure = null,
   shouldProcessRequest = () => true,
   logger = console,
   cache = new Map()
@@ -1024,8 +1038,6 @@ export function createGeminiDownloadFetchHook({
       return response;
     }
 
-    const fallbackResponse = typeof response.clone === 'function' ? response.clone() : response;
-
     try {
       let pendingBlob = cache.get(normalizedUrl);
       if (!pendingBlob) {
@@ -1057,10 +1069,25 @@ export function createGeminiDownloadFetchHook({
       }
 
       const processedBlob = await pendingBlob;
+      if (typeof onProcessedBlobResolved === 'function') {
+        await onProcessedBlobResolved(appendCompatibleActionContext({
+          url,
+          normalizedUrl,
+          processedBlob,
+          responseStatus: response.status,
+          responseStatusText: response.statusText,
+          responseHeaders: serializeResponseHeaders(response.headers)
+        }, resolvedActionContext));
+      }
       return buildProcessedResponse(response, processedBlob);
     } catch (error) {
       logger?.warn?.('[Gemini Watermark Remover] Download hook processing failed:', error);
-      return fallbackResponse;
+      await notifyActionCriticalFailure(onActionCriticalFailure, appendCompatibleActionContext({
+        error,
+        url,
+        normalizedUrl
+      }, resolvedActionContext));
+      throw error;
     }
   };
 }
