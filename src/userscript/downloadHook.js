@@ -884,6 +884,11 @@ function collectGeminiGeneratedUrlsFromParsedNode(node, urls = new Set()) {
   }
 
   if (!Array.isArray(node)) {
+    if (node && typeof node === 'object') {
+      for (const value of Object.values(node)) {
+        collectGeminiGeneratedUrlsFromParsedNode(value, urls);
+      }
+    }
     return urls;
   }
 

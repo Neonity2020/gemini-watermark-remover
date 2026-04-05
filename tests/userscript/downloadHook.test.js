@@ -1214,6 +1214,176 @@ test('extractGeminiAssetBindingsFromResponseText should bind preview urls that l
   }]);
 });
 
+test('extractGeminiAssetBindingsFromResponseText should reserve explicit draft ids for their owning response tuple before pairing earlier tuples', () => {
+  const historyPayload = [[
+    ['c_cdec91057e5fdcaf', 'r_early_response'],
+    ['c_cdec91057e5fdcaf', 'r_late_response', 'rc_late_owned'],
+    [[[
+      'rc_late_owned',
+      ['http://googleusercontent.com/image_generation_content/4'],
+      [null, null, null, null, [null, null, 8]],
+      null,
+      null,
+      null,
+      null,
+      null,
+      [2],
+      'und',
+      null,
+      null,
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        [3],
+        [[[[null, null, null, [
+          null,
+          1,
+          'late.png',
+          'https://lh3.googleusercontent.com/gg/AMW1TPlatelateOwnedUrl'
+        ]]]]]
+      ]
+    ]]],
+    [[[
+      'rc_early_missing',
+      ['http://googleusercontent.com/image_generation_content/4'],
+      [null, null, null, null, [null, null, 8]],
+      null,
+      null,
+      null,
+      null,
+      null,
+      [2],
+      'und',
+      null,
+      null,
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        [3],
+        [[[[null, null, null, [
+          null,
+          1,
+          'early.png',
+          'https://lh3.googleusercontent.com/gg/AMW1TPearlyMissingUrl'
+        ]]]]]
+      ]
+    ]]]
+  ]];
+  const responseText = `)]}'\n123\n${JSON.stringify([['wrb.fr', 'hNvQHb', JSON.stringify(historyPayload), null, null, null, 'generic']])}`;
+
+  assert.deepEqual(extractGeminiAssetBindingsFromResponseText(responseText), [
+    {
+      discoveredUrl: 'https://lh3.googleusercontent.com/gg/AMW1TPlatelateOwnedUrl=s0',
+      assetIds: {
+        responseId: 'r_late_response',
+        draftId: 'rc_late_owned',
+        conversationId: 'c_cdec91057e5fdcaf'
+      }
+    },
+    {
+      discoveredUrl: 'https://lh3.googleusercontent.com/gg/AMW1TPearlyMissingUrl=s0',
+      assetIds: {
+        responseId: 'r_early_response',
+        draftId: 'rc_early_missing',
+        conversationId: 'c_cdec91057e5fdcaf'
+      }
+    }
+  ]);
+});
+
+test('extractGeminiAssetBindingsFromResponseText should recover draft urls nested inside object-shaped history nodes', () => {
+  const historyPayload = [[
+    [
+      ['c_cdec91057e5fdcaf', 'r_ea71y0001'],
+      ['c_cdec91057e5fdcaf', 'r_1a7e2222', 'rc_1a7e3333'],
+      [[[
+        'rc_ea71y4444',
+        ['http://googleusercontent.com/image_generation_content/2'],
+        [null, null, null, null, [null, null, 8]],
+        'rc_ea71y4444',
+        null,
+        null,
+        null,
+        null,
+        [2],
+        'und',
+        null,
+        null,
+        [
+          {
+            7: [3],
+            8: [[[[null, null, null, [
+              null,
+              1,
+              'early.png',
+              'https://lh3.googleusercontent.com/gg/AMW1TPobjectWrappedEarlyUrl'
+            ]]]]],
+            46: []
+          }
+        ]
+      ]]],
+      [[[
+        'rc_1a7e3333',
+        ['http://googleusercontent.com/image_generation_content/2'],
+        [null, null, null, null, [null, null, 8]],
+        null,
+        null,
+        null,
+        null,
+        null,
+        [2],
+        'und',
+        null,
+        null,
+        [
+          {
+            7: [3],
+            8: [[[[null, null, null, [
+              null,
+              1,
+              'late.png',
+              'https://lh3.googleusercontent.com/gg/AMW1TPobjectWrappedLateUrl'
+            ]]]]],
+            46: []
+          }
+        ]
+      ]]]
+    ]
+  ]];
+  const responseText = `)]}'\n123\n${JSON.stringify([['wrb.fr', 'hNvQHb', JSON.stringify(historyPayload), null, null, null, 'generic']])}`;
+
+  const sortBindings = (bindings) => [...bindings].sort((left, right) => (
+    left.discoveredUrl.localeCompare(right.discoveredUrl)
+  ));
+
+  assert.deepEqual(sortBindings(extractGeminiAssetBindingsFromResponseText(responseText)), sortBindings([
+    {
+      discoveredUrl: 'https://lh3.googleusercontent.com/gg/AMW1TPobjectWrappedLateUrl=s0',
+      assetIds: {
+        responseId: 'r_1a7e2222',
+        draftId: 'rc_1a7e3333',
+        conversationId: 'c_cdec91057e5fdcaf'
+      }
+    },
+    {
+      discoveredUrl: 'https://lh3.googleusercontent.com/gg/AMW1TPobjectWrappedEarlyUrl=s0',
+      assetIds: {
+        responseId: 'r_ea71y0001',
+        draftId: 'rc_ea71y4444',
+        conversationId: 'c_cdec91057e5fdcaf'
+      }
+    }
+  ]));
+});
+
 test('createGeminiDownloadRpcFetchHook should notify discovered original asset urls from download rpc responses', async () => {
   const seen = [];
   const originalFetch = async () => new Response(
