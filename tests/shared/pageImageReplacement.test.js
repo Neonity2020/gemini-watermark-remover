@@ -1959,6 +1959,51 @@ test('preparePageImageProcessing should reuse remembered original asset urls whe
   });
 });
 
+test('preparePageImageProcessing should reuse request-layer preview source urls from the session store before falling back to blob capture', async () => {
+  await withPageImageTestEnv(async ({ MockHTMLImageElement }) => {
+    const imageSessionStore = createImageSessionStore();
+    const sessionKey = imageSessionStore.getOrCreateByAssetIds({
+      responseId: 'r_store_preview_source',
+      draftId: 'rc_store_preview_source',
+      conversationId: 'c_store_preview_source'
+    });
+    imageSessionStore.updateSourceSnapshot(sessionKey, {
+      sourceUrl: 'https://lh3.googleusercontent.com/gg-dl/example-store-preview=s0-rj?alr=yes',
+      isPreviewSource: true
+    });
+
+    const image = new MockHTMLImageElement();
+    image.dataset = {
+      gwrResponseId: 'r_store_preview_source',
+      gwrDraftId: 'rc_store_preview_source',
+      gwrConversationId: 'c_store_preview_source'
+    };
+    image.style = {};
+    image.src = 'blob:https://gemini.google.com/store-preview-runtime';
+    image.currentSrc = image.src;
+    image.naturalWidth = 1024;
+    image.naturalHeight = 559;
+    image.width = 1024;
+    image.height = 559;
+    image.clientWidth = 456;
+    image.clientHeight = 249;
+    image.parentElement = createMockElement('div');
+    image.closest = () => null;
+
+    const result = preparePageImageProcessing(image, {
+      imageSessionStore,
+      HTMLImageElementClass: MockHTMLImageElement,
+      isProcessableImage: () => true
+    });
+
+    assert.equal(result?.sourceUrl, 'https://lh3.googleusercontent.com/gg-dl/example-store-preview=s0-rj?alr=yes');
+    assert.equal(result?.normalizedUrl, 'https://lh3.googleusercontent.com/gg-dl/example-store-preview=s0-rj?alr=yes');
+    assert.equal(result?.isPreviewSource, false);
+    assert.equal(image.dataset.gwrSourceUrl, 'https://lh3.googleusercontent.com/gg-dl/example-store-preview=s0-rj?alr=yes');
+    assert.equal(image.dataset.gwrPageImageSource, 'https://lh3.googleusercontent.com/gg-dl/example-store-preview=s0-rj?alr=yes');
+  });
+});
+
 test('preparePageImageProcessing should attach processing image state to the image session store', async () => {
   await withPageImageTestEnv(async ({ MockHTMLImageElement }) => {
     const imageSessionStore = createImageSessionStore();
@@ -2834,6 +2879,65 @@ test('createPageImageReplacementController should process at most one image per 
     await Promise.resolve();
 
     assert.deepEqual(started, ['a', 'b']);
+  });
+});
+
+test('createPageImageReplacementController should prioritize fullscreen images ahead of queued preview images', async () => {
+  await withPageImageTestEnv(async ({ MockHTMLImageElement }) => {
+    const scheduledDrains = [];
+    const started = [];
+
+    const makeImage = (id, { fullscreen = false } = {}) => {
+      const container = createMockElement('div');
+      const image = new MockHTMLImageElement();
+      image.dataset = {
+        gwrSourceUrl: `https://lh3.googleusercontent.com/gg/${id}=s1024-rj`,
+        testId: id
+      };
+      image.style = {};
+      image.src = image.dataset.gwrSourceUrl;
+      image.currentSrc = image.src;
+      image.parentElement = container;
+      image.closest = (selector) => {
+        if (selector === 'generated-image,.generated-image-container') {
+          return container;
+        }
+        if (fullscreen && selector === 'expansion-dialog,[role="dialog"],.image-expansion-dialog-panel,.cdk-overlay-pane') {
+          return {};
+        }
+        return null;
+      };
+      return image;
+    };
+
+    const previewImage = makeImage('preview');
+    const fullscreenImage = makeImage('fullscreen', { fullscreen: true });
+
+    const controller = createPageImageReplacementController({
+      logger: createSilentLogger(),
+      scheduleProcessingDrain(callback) {
+        scheduledDrains.push(callback);
+      },
+      processPageImageSourceImpl: async ({ imageElement }) => ({
+        skipped: true,
+        reason: `processed-${started.push(imageElement.dataset.testId)}`,
+        candidateDiagnostics: [{ strategy: 'page-fetch', status: 'error' }],
+        candidateDiagnosticsSummary: 'page-fetch,error'
+      })
+    });
+
+    controller.processRoot({
+      querySelectorAll() {
+        return [previewImage, fullscreenImage];
+      }
+    });
+
+    assert.equal(scheduledDrains.length, 1);
+
+    scheduledDrains[0]();
+    await new Promise((resolve) => setImmediate(resolve));
+
+    assert.deepEqual(started, ['fullscreen']);
   });
 });
 

@@ -358,6 +358,18 @@ function resolveRememberedOriginalAssetUrl(assetIds = null) {
   return '';
 }
 
+function resolveRememberedPreviewSourceUrl(assetIds = null, {
+  imageSessionStore = getDefaultImageSessionStore()
+} = {}) {
+  const sessionKey = imageSessionStore?.getOrCreateByAssetIds?.(assetIds) || '';
+  if (!sessionKey) {
+    return '';
+  }
+
+  const previewUrl = imageSessionStore?.getSnapshot?.(sessionKey)?.sources?.previewUrl || '';
+  return typeof previewUrl === 'string' ? previewUrl.trim() : '';
+}
+
 function trimRememberedPreviewResultRegistry() {
   while (previewProcessedResultRegistry.size > MAX_REMEMBERED_PREVIEW_RESULT_REGISTRY_SIZE) {
     const oldestKey = previewProcessedResultRegistry.keys().next().value;
@@ -1669,9 +1681,13 @@ export function preparePageImageProcessing(imageElement, {
     ? resolveAssetIds(imageElement)
     : null;
   const rememberedSourceUrl = resolveRememberedOriginalAssetUrl(assetIds);
-  if (rememberedSourceUrl && (!dataset.gwrSourceUrl || isBlobPageImageSource(sourceUrl))) {
-    dataset.gwrSourceUrl = rememberedSourceUrl;
-    sourceUrl = rememberedSourceUrl;
+  const rememberedPreviewSourceUrl = isBlobPageImageSource(sourceUrl) || isDataPageImageSource(sourceUrl)
+    ? resolveRememberedPreviewSourceUrl(assetIds, { imageSessionStore })
+    : '';
+  const rememberedBoundSourceUrl = rememberedSourceUrl || rememberedPreviewSourceUrl;
+  if (rememberedBoundSourceUrl && (!dataset.gwrSourceUrl || isBlobPageImageSource(sourceUrl) || isDataPageImageSource(sourceUrl))) {
+    dataset.gwrSourceUrl = rememberedBoundSourceUrl;
+    sourceUrl = rememberedBoundSourceUrl;
   }
   if (!sourceUrl) {
     return null;
@@ -2242,7 +2258,11 @@ export function createPageImageReplacementController({
     if (!imageElement) return;
     if (queued.has(imageElement) || processing.has(imageElement)) return;
     queued.add(imageElement);
-    pendingImages.push(imageElement);
+    if (resolveImageSessionSurfaceType(imageElement) === 'fullscreen') {
+      pendingImages.unshift(imageElement);
+    } else {
+      pendingImages.push(imageElement);
+    }
     scheduleDrain();
   }
 
