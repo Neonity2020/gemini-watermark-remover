@@ -415,12 +415,11 @@ function leavesWorseResidualGradientThanCanonical(canonicalCandidate, driftCandi
         Math.max(0, driftProcessedGradientRaw) >= STANDARD_LOCAL_SHIFT_MAX_CANDIDATE_GRADIENT_FOR_CLEAN_BASE;
 }
 
-function shouldPreserveStrongStandardAnchor(currentBest, candidate) {
-    if (!isDriftedStandardCandidate(candidate)) return false;
-    if (currentBest?.provenance?.localShift === true) return false;
-    if (!isCanonicalStandardCandidate(currentBest) || !isStandardCandidateSource(candidate)) return false;
+function shouldPreserveCanonicalAnchor(canonicalCandidate, driftCandidate) {
+    if (!isCanonicalStandardCandidate(canonicalCandidate)) return false;
+    if (!isDriftedStandardCandidate(driftCandidate)) return false;
 
-    const validationAdvantage = Number(currentBest.validationCost) - Number(candidate.validationCost);
+    const validationAdvantage = Number(canonicalCandidate.validationCost) - Number(driftCandidate.validationCost);
     if (
         !Number.isFinite(validationAdvantage)
     ) {
@@ -428,19 +427,23 @@ function shouldPreserveStrongStandardAnchor(currentBest, candidate) {
     }
 
     return (
-        hasStrongCanonicalAnchorSignal(currentBest) &&
-        hasWeakDriftEvidence(candidate) &&
+        hasStrongCanonicalAnchorSignal(canonicalCandidate) &&
+        hasWeakDriftEvidence(driftCandidate) &&
         validationAdvantage < STANDARD_LOCAL_SHIFT_MIN_VALIDATION_ADVANTAGE
-    ) || leavesWorseResidualGradientThanCanonical(currentBest, candidate);
+    ) || leavesWorseResidualGradientThanCanonical(canonicalCandidate, driftCandidate);
+}
+
+function shouldPreserveStrongStandardAnchor(currentBest, candidate) {
+    if (currentBest?.provenance?.localShift === true) return false;
+    if (!isStandardCandidateSource(candidate)) return false;
+    return shouldPreserveCanonicalAnchor(currentBest, candidate);
 }
 
 function shouldRevertLocalShiftToStandardTrial(selectedCandidate, standardTrial) {
     if (selectedCandidate?.provenance?.localShift !== true) return false;
     if (!isStandardCandidateSource(selectedCandidate) || !isStandardCandidateSource(standardTrial)) return false;
     if (!standardTrial?.accepted) return false;
-    return hasStrongCanonicalAnchorSignal(standardTrial) &&
-        hasWeakDriftEvidence(selectedCandidate) &&
-        leavesWorseResidualGradientThanCanonical(standardTrial, selectedCandidate);
+    return shouldPreserveCanonicalAnchor(standardTrial, selectedCandidate);
 }
 
 function shouldSkipStandardLocalSearch(seedCandidate) {
@@ -998,17 +1001,8 @@ function promoteBaseCandidate(baseCandidate, baseDecisionTier, candidate, {
         };
     }
 
-    const candidateIsDriftedStandard =
-        isStandardCandidateSource(promotion.candidate) &&
-        (promotion.candidate?.provenance?.localShift === true || promotion.candidate?.provenance?.sizeJitter === true);
-    const baseIsCanonicalStandard =
-        isStandardCandidateSource(baseCandidate) &&
-        baseCandidate?.provenance?.localShift !== true &&
-        baseCandidate?.provenance?.sizeJitter !== true;
     if (
-        candidateIsDriftedStandard &&
-        baseIsCanonicalStandard &&
-        shouldPreserveStrongStandardAnchor(baseCandidate, promotion.candidate)
+        shouldPreserveCanonicalAnchor(baseCandidate, promotion.candidate)
     ) {
         return {
             baseCandidate,
