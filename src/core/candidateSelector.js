@@ -990,6 +990,24 @@ function promoteBaseCandidate(baseCandidate, baseDecisionTier, candidate, {
         };
     }
 
+    const candidateIsDriftedStandard =
+        isStandardCandidateSource(promotion.candidate) &&
+        (promotion.candidate?.provenance?.localShift === true || promotion.candidate?.provenance?.sizeJitter === true);
+    const baseIsCanonicalStandard =
+        isStandardCandidateSource(baseCandidate) &&
+        baseCandidate?.provenance?.localShift !== true &&
+        baseCandidate?.provenance?.sizeJitter !== true;
+    if (
+        candidateIsDriftedStandard &&
+        baseIsCanonicalStandard &&
+        shouldPreserveStrongStandardAnchor(baseCandidate, promotion.candidate)
+    ) {
+        return {
+            baseCandidate,
+            baseDecisionTier
+        };
+    }
+
     const previousCandidate = baseCandidate;
     const nextCandidate = pickBetterCandidate(baseCandidate, promotion.candidate, minCostDelta);
     return {
