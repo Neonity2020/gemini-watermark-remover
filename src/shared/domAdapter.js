@@ -1,6 +1,8 @@
 import { isGeminiGeneratedAssetUrl } from '../userscript/urlUtils.js';
 
 const GEMINI_IMAGE_CONTAINER_SELECTOR = 'generated-image,.generated-image-container';
+const GEMINI_FULLSCREEN_CONTAINER_SELECTOR = 'expansion-dialog,[role="dialog"],.image-expansion-dialog-panel,.cdk-overlay-pane';
+const GEMINI_UPLOADER_PREVIEW_SELECTOR = '[data-test-id="image-preview"],uploader-file-preview,uploader-file-preview-container,.attachment-preview-wrapper,.file-preview-container';
 const MIN_GEMINI_IMAGE_EDGE = 128;
 const MAX_CONTAINER_SEARCH_DEPTH = 4;
 const MIN_ACTION_BUTTONS = 3;
@@ -89,6 +91,22 @@ function getMediaEdgeSize(element) {
   };
 }
 
+function hasAnyGeminiAssetIds(assetIds) {
+  return Boolean(assetIds?.responseId || assetIds?.draftId || assetIds?.conversationId);
+}
+
+function isBlobOrDataImageSource(sourceUrl) {
+  return sourceUrl.startsWith('blob:') || sourceUrl.startsWith('data:');
+}
+
+function isInsideGeminiFullscreenContainer(img) {
+  return Boolean(getClosestElement(img, GEMINI_FULLSCREEN_CONTAINER_SELECTOR));
+}
+
+function isGeminiUploaderPreviewImage(img) {
+  return Boolean(getClosestElement(img, GEMINI_UPLOADER_PREVIEW_SELECTOR));
+}
+
 export function resolveCandidateImageUrl(img) {
   if (!img || typeof img !== 'object') return '';
   if (img?.dataset?.gwrPreviewImage === 'true') return '';
@@ -111,6 +129,7 @@ export function resolveCandidateImageUrl(img) {
 export function isProcessableGeminiImageElement(img) {
   if (!img || typeof img.closest !== 'function') return false;
   if (img?.dataset?.gwrPreviewImage === 'true') return false;
+  if (isGeminiUploaderPreviewImage(img)) return false;
   const knownContainer = img.closest(GEMINI_IMAGE_CONTAINER_SELECTOR);
   const sourceUrl = resolveCandidateImageUrl(img);
   if (isGeminiGeneratedAssetUrl(sourceUrl)) {
@@ -120,9 +139,15 @@ export function isProcessableGeminiImageElement(img) {
 
   if (
     knownContainer &&
-    (sourceUrl.startsWith('blob:') || sourceUrl.startsWith('data:'))
+    isBlobOrDataImageSource(sourceUrl)
   ) {
-    return true;
+    if (isInsideGeminiFullscreenContainer(img)) {
+      return true;
+    }
+
+    if (hasAnyGeminiAssetIds(extractGeminiImageAssetIds(img))) {
+      return true;
+    }
   }
 
   return shouldUseRenderedImageFallback(img);

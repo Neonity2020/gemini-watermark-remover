@@ -143,7 +143,11 @@ test('isProcessableGeminiImageElement should accept fullscreen cached blob image
     clientHeight: 519,
     currentSrc: 'blob:https://gemini.google.com/fullscreen-cached',
     src: 'blob:https://gemini.google.com/fullscreen-cached',
-    closest: (selector) => selector === 'generated-image,.generated-image-container' ? {} : null,
+    closest: (selector) => {
+      if (selector === 'generated-image,.generated-image-container') return {};
+      if (selector === 'expansion-dialog,[role="dialog"],.image-expansion-dialog-panel,.cdk-overlay-pane') return {};
+      return null;
+    },
     parentElement: null
   }), true);
 });
@@ -158,9 +162,48 @@ test('isProcessableGeminiImageElement should accept zero-sized fullscreen blob i
     complete: false,
     currentSrc: '',
     src: 'blob:https://gemini.google.com/fullscreen-pending',
-    closest: (selector) => selector === 'generated-image,.generated-image-container' ? {} : null,
+    closest: (selector) => {
+      if (selector === 'generated-image,.generated-image-container') return {};
+      if (selector === 'expansion-dialog,[role="dialog"],.image-expansion-dialog-panel,.cdk-overlay-pane') return {};
+      return null;
+    },
     parentElement: null
   }), true);
+});
+
+test('isProcessableGeminiImageElement should reject inline blob images inside Gemini containers without Gemini evidence', () => {
+  assert.equal(isProcessableGeminiImageElement({
+    dataset: {},
+    naturalWidth: 1024,
+    naturalHeight: 768,
+    clientWidth: 480,
+    clientHeight: 360,
+    currentSrc: 'blob:https://gemini.google.com/user-upload',
+    src: 'blob:https://gemini.google.com/user-upload',
+    closest: (selector) => selector === 'generated-image,.generated-image-container' ? {} : null,
+    parentElement: null
+  }), false);
+});
+
+test('isProcessableGeminiImageElement should reject uploader preview images even when blob fallback cues are present', () => {
+  const actionCluster = {
+    querySelectorAll: () => [{}, {}, {}],
+    parentElement: null
+  };
+
+  assert.equal(isProcessableGeminiImageElement({
+    dataset: {},
+    naturalWidth: 1024,
+    naturalHeight: 768,
+    clientWidth: 480,
+    clientHeight: 360,
+    currentSrc: 'blob:https://gemini.google.com/user-upload-preview',
+    src: 'blob:https://gemini.google.com/user-upload-preview',
+    parentElement: actionCluster,
+    closest: (selector) => selector === '[data-test-id="image-preview"],uploader-file-preview,uploader-file-preview-container,.attachment-preview-wrapper,.file-preview-container'
+      ? {}
+      : null
+  }), false);
 });
 
 test('isProcessableGeminiImageElement should reject non-Gemini urls and tiny images outside Gemini containers', () => {

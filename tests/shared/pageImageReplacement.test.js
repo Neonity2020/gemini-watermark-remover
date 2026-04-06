@@ -873,9 +873,11 @@ test('collectCandidateImages should include fullscreen cached blob images inside
     image.clientHeight = 519;
     image.currentSrc = 'blob:https://gemini.google.com/fullscreen-cached';
     image.src = image.currentSrc;
-    image.closest = (selector) => selector === 'generated-image,.generated-image-container'
-      ? container
-      : null;
+    image.closest = (selector) => {
+      if (selector === 'generated-image,.generated-image-container') return container;
+      if (selector === 'expansion-dialog,[role="dialog"],.image-expansion-dialog-panel,.cdk-overlay-pane') return {};
+      return null;
+    };
 
     const root = {
       querySelectorAll() {
@@ -901,6 +903,35 @@ test('collectCandidateImages should include zero-sized fullscreen blob images in
     image.complete = false;
     image.currentSrc = '';
     image.src = 'blob:https://gemini.google.com/fullscreen-pending';
+    image.closest = (selector) => {
+      if (selector === 'generated-image,.generated-image-container') return container;
+      if (selector === 'expansion-dialog,[role="dialog"],.image-expansion-dialog-panel,.cdk-overlay-pane') return {};
+      return null;
+    };
+
+    const root = {
+      querySelectorAll() {
+        return [image];
+      }
+    };
+
+    const candidates = collectCandidateImages(root);
+
+    assert.deepEqual(candidates, [image]);
+  });
+});
+
+test('collectCandidateImages should ignore inline blob images inside Gemini containers without Gemini evidence', async () => {
+  await withPageImageTestEnv(async ({ MockHTMLImageElement }) => {
+    const container = {};
+    const image = new MockHTMLImageElement();
+    image.dataset = {};
+    image.naturalWidth = 1024;
+    image.naturalHeight = 768;
+    image.clientWidth = 480;
+    image.clientHeight = 360;
+    image.currentSrc = 'blob:https://gemini.google.com/user-upload';
+    image.src = image.currentSrc;
     image.closest = (selector) => selector === 'generated-image,.generated-image-container'
       ? container
       : null;
@@ -913,7 +944,38 @@ test('collectCandidateImages should include zero-sized fullscreen blob images in
 
     const candidates = collectCandidateImages(root);
 
-    assert.deepEqual(candidates, [image]);
+    assert.deepEqual(candidates, []);
+  });
+});
+
+test('collectCandidateImages should ignore uploader preview images even when blob fallback cues are present', async () => {
+  await withPageImageTestEnv(async ({ MockHTMLImageElement }) => {
+    const actionCluster = {
+      querySelectorAll: () => [{}, {}, {}],
+      parentElement: null
+    };
+    const image = new MockHTMLImageElement();
+    image.dataset = {};
+    image.naturalWidth = 1024;
+    image.naturalHeight = 768;
+    image.clientWidth = 480;
+    image.clientHeight = 360;
+    image.currentSrc = 'blob:https://gemini.google.com/user-upload-preview';
+    image.src = image.currentSrc;
+    image.parentElement = actionCluster;
+    image.closest = (selector) => selector === '[data-test-id="image-preview"],uploader-file-preview,uploader-file-preview-container,.attachment-preview-wrapper,.file-preview-container'
+      ? {}
+      : null;
+
+    const root = {
+      querySelectorAll() {
+        return [image];
+      }
+    };
+
+    const candidates = collectCandidateImages(root);
+
+    assert.deepEqual(candidates, []);
   });
 });
 
@@ -2306,9 +2368,11 @@ test('createPageImageReplacementController should reuse clicked preview source f
     fullscreenImage.clientWidth = 951;
     fullscreenImage.clientHeight = 519;
     fullscreenImage.style = {};
-    fullscreenImage.closest = (selector) => selector === 'generated-image,.generated-image-container'
-      ? {}
-      : null;
+    fullscreenImage.closest = (selector) => {
+      if (selector === 'generated-image,.generated-image-container') return {};
+      if (selector === 'expansion-dialog,[role="dialog"],.image-expansion-dialog-panel,.cdk-overlay-pane') return {};
+      return null;
+    };
 
     const seenSources = [];
     const controller = createPageImageReplacementController({
@@ -2415,9 +2479,11 @@ test('createPageImageReplacementController should reuse remembered original asse
     fullscreenImage.clientWidth = 951;
     fullscreenImage.clientHeight = 519;
     fullscreenImage.style = {};
-    fullscreenImage.closest = (selector) => selector === 'generated-image,.generated-image-container'
-      ? {}
-      : null;
+    fullscreenImage.closest = (selector) => {
+      if (selector === 'generated-image,.generated-image-container') return {};
+      if (selector === 'expansion-dialog,[role="dialog"],.image-expansion-dialog-panel,.cdk-overlay-pane') return {};
+      return null;
+    };
 
     const seenSources = [];
     const controller = createPageImageReplacementController({
