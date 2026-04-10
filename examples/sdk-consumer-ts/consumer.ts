@@ -3,11 +3,11 @@ import {
     removeWatermarkFromImageDataSync,
     type ImageDataLike,
     type WatermarkMeta
-} from 'gemini-watermark-remover';
+} from '@pilio/gemini-watermark-remover';
 import {
     inferMimeTypeFromPath,
     type NodeBufferRemovalOptions
-} from 'gemini-watermark-remover/node';
+} from '@pilio/gemini-watermark-remover/node';
 
 const imageData: ImageDataLike = {
     width: 64,

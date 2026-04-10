@@ -31,8 +31,8 @@ function encodeSyntheticImageData(imageData) {
 }
 
 test('removeWatermarkFromBuffer should support pluggable Node decode and encode hooks', async () => {
-    const mod = await import('gemini-watermark-remover/node');
-    const imageDataSdk = await import('gemini-watermark-remover/image-data');
+    const mod = await import('@pilio/gemini-watermark-remover/node');
+    const imageDataSdk = await import('@pilio/gemini-watermark-remover/image-data');
     const alpha48 = await imageDataSdk.createWatermarkEngine().then((engine) => engine.getAlphaMap(48));
     const imageData = createPatternImageData(320, 320);
     const position = { x: 320 - 32 - 48, y: 320 - 32 - 48, width: 48, height: 48 };
@@ -53,8 +53,8 @@ test('removeWatermarkFromBuffer should support pluggable Node decode and encode 
 });
 
 test('removeWatermarkFromFile should read input and optionally write output', async () => {
-    const mod = await import('gemini-watermark-remover/node');
-    const imageDataSdk = await import('gemini-watermark-remover/image-data');
+    const mod = await import('@pilio/gemini-watermark-remover/node');
+    const imageDataSdk = await import('@pilio/gemini-watermark-remover/image-data');
     const alpha48 = await imageDataSdk.createWatermarkEngine().then((engine) => engine.getAlphaMap(48));
     const imageData = createPatternImageData(320, 320);
     const position = { x: 320 - 32 - 48, y: 320 - 32 - 48, width: 48, height: 48 };

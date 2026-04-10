@@ -116,7 +116,7 @@ gwr remove <input> [--output <file> | --out-dir <dir>] [--overwrite] [--json]
 If you do not have `gwr` installed globally, use:
 
 ```bash
-pnpm dlx gemini-watermark-remover remove <input> --output <file>
+pnpm dlx @pilio/gemini-watermark-remover remove <input> --output <file>
 ```
 
 ### Developer Preview
@@ -178,7 +178,7 @@ import {
   removeWatermarkFromImage,
   removeWatermarkFromImageData,
   removeWatermarkFromImageDataSync,
-} from 'gemini-watermark-remover';
+} from '@pilio/gemini-watermark-remover';
 ```
 
 Use the pure-data API when you already have decoded `ImageData`:
@@ -211,7 +211,7 @@ const second = await removeWatermarkFromImageData(imageDataB, { engine });
 For Node.js integrations, use the dedicated subpath and inject your own decoder/encoder:
 
 ```javascript
-import { removeWatermarkFromBuffer } from 'gemini-watermark-remover/node';
+import { removeWatermarkFromBuffer } from '@pilio/gemini-watermark-remover/node';
 
 const result = await removeWatermarkFromBuffer(inputBuffer, {
   mimeType: 'image/png',

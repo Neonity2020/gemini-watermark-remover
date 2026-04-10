@@ -97,7 +97,7 @@ test('skill runtime script should include Windows PATH fallback shim behavior', 
   assert.match(source, /['"]gwr['"]/);
   assert.match(source, /['"]pnpm['"]/);
   assert.match(source, /['"]dlx['"]/);
-  assert.match(source, /['"]gemini-watermark-remover['"]/);
+  assert.match(source, /['"]@pilio\/gemini-watermark-remover['"]/);
 });
 
 test('skill docs should explicitly include the remove subcommand shape', async () => {
@@ -150,7 +150,7 @@ test('installed skill runtime should fall back to pnpm dlx when repo-local bin i
   const installRoot = path.join(tempDir, '.agents', 'skills', 'gemini-watermark-remover');
   await mkdir(path.join(tempDir, 'bin'), { recursive: true });
   await cp(fileURLToPath(skillRoot), installRoot, { recursive: true });
-  const packageSpec = 'test-gemini-watermark-remover-spec';
+  const packageSpec = '@pilio/gemini-watermark-remover';
 
   if (process.platform === 'win32') {
     const fakePnpmPath = path.join(tempDir, 'bin', 'pnpm.cmd');
@@ -171,7 +171,7 @@ test('installed skill runtime should fall back to pnpm dlx when repo-local bin i
     const repoCliPath = fileURLToPath(new URL('../../bin/gwr.mjs', import.meta.url));
     await writeFile(
       fakePnpmPath,
-      `#!/usr/bin/env sh\nif [ "$1" = "dlx" ]; then shift; fi\nif [ "$1" = "gemini-watermark-remover" ]; then shift; fi\nnode "${repoCliPath}" "$@"\n`,
+      `#!/usr/bin/env sh\nif [ "$1" = "dlx" ]; then shift; fi\nif [ "$1" = "@pilio/gemini-watermark-remover" ]; then shift; fi\nnode "${repoCliPath}" "$@"\n`,
       'utf8'
     );
   }

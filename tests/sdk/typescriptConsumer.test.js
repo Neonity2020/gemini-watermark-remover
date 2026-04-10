@@ -9,7 +9,7 @@ const ROOT_DIR = process.cwd();
 test('packed sdk should compile in an isolated TypeScript consumer without DOM libs', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'wm-ts-consumer-'));
     const nodeModulesDir = path.join(tempDir, 'node_modules');
-    const packageRoot = path.join(nodeModulesDir, 'gemini-watermark-remover');
+    const packageRoot = path.join(nodeModulesDir, '@pilio', 'gemini-watermark-remover');
     const tarballDir = path.join(tempDir, 'packed');
     const tsconfigPath = path.join(tempDir, 'tsconfig.json');
     const consumerEntry = path.join(tempDir, 'consumer.ts');
@@ -32,7 +32,7 @@ test('packed sdk should compile in an isolated TypeScript consumer without DOM l
         ...examplePackageJson,
         dependencies: {
             ...examplePackageJson.dependencies,
-            'gemini-watermark-remover': 'file:./node_modules/gemini-watermark-remover'
+            '@pilio/gemini-watermark-remover': 'file:./node_modules/@pilio/gemini-watermark-remover'
         }
     }, null, 2), 'utf8');
 

@@ -116,7 +116,7 @@ gwr remove <input> [--output <file> | --out-dir <dir>] [--overwrite] [--json]
 如果本机未全局安装 `gwr`，可直接使用：
 
 ```bash
-pnpm dlx gemini-watermark-remover remove <input> --output <file>
+pnpm dlx @pilio/gemini-watermark-remover remove <input> --output <file>
 ```
 
 ### 开发者预览
@@ -178,7 +178,7 @@ import {
   removeWatermarkFromImage,
   removeWatermarkFromImageData,
   removeWatermarkFromImageDataSync,
-} from 'gemini-watermark-remover';
+} from '@pilio/gemini-watermark-remover';
 ```
 
 如果你已经拿到了 `ImageData`，优先用纯数据接口：
@@ -211,7 +211,7 @@ const second = await removeWatermarkFromImageData(imageDataB, { engine });
 如果你在 Node.js 里接入，可使用专门的子入口，并注入自己的解码/编码器：
 
 ```javascript
-import { removeWatermarkFromBuffer } from 'gemini-watermark-remover/node';
+import { removeWatermarkFromBuffer } from '@pilio/gemini-watermark-remover/node';
 
 const result = await removeWatermarkFromBuffer(inputBuffer, {
   mimeType: 'image/png',

@@ -9,7 +9,7 @@ import { packProjectTarball, runCommand } from './testUtils.js';
 test('packed sdk should be runnable from an isolated consumer project', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'wm-consumer-'));
     const nodeModulesDir = path.join(tempDir, 'node_modules');
-    const packageRoot = path.join(nodeModulesDir, 'gemini-watermark-remover');
+    const packageRoot = path.join(nodeModulesDir, '@pilio', 'gemini-watermark-remover');
     const tarballDir = path.join(tempDir, 'packed');
     const consumerEntry = path.join(tempDir, 'consumer.mjs');
 
@@ -24,8 +24,8 @@ import assert from 'node:assert/strict';
 import {
     createWatermarkEngine,
     removeWatermarkFromImageDataSync
-} from 'gemini-watermark-remover';
-import { removeWatermarkFromBuffer, inferMimeTypeFromPath } from 'gemini-watermark-remover/node';
+} from '@pilio/gemini-watermark-remover';
+import { removeWatermarkFromBuffer, inferMimeTypeFromPath } from '@pilio/gemini-watermark-remover/node';
 
 const engine = await createWatermarkEngine();
 const imageData = {

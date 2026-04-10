@@ -7,7 +7,7 @@ import {
 } from '../core/syntheticWatermarkTestUtils.js';
 
 test('package root should expose a stable sdk surface', async () => {
-    const mod = await import('gemini-watermark-remover');
+    const mod = await import('@pilio/gemini-watermark-remover');
 
     assert.equal(typeof mod.createWatermarkEngine, 'function');
     assert.equal(typeof mod.removeWatermarkFromImageData, 'function');
@@ -18,7 +18,7 @@ test('package root should expose a stable sdk surface', async () => {
 });
 
 test('removeWatermarkFromImageData should work without caller-provided alpha maps', async () => {
-    const mod = await import('gemini-watermark-remover');
+    const mod = await import('@pilio/gemini-watermark-remover');
     const engine = await mod.createWatermarkEngine();
     const alpha48 = await engine.getAlphaMap(48);
     const imageData = createPatternImageData(320, 320);
@@ -42,7 +42,7 @@ test('removeWatermarkFromImageData should work without caller-provided alpha map
 });
 
 test('removeWatermarkFromImageDataSync should work without caller-provided alpha maps', async () => {
-    const mod = await import('gemini-watermark-remover');
+    const mod = await import('@pilio/gemini-watermark-remover');
     const engine = await mod.createWatermarkEngine();
     const alpha48 = await engine.getAlphaMap(48);
     const imageData = createPatternImageData(320, 320);
