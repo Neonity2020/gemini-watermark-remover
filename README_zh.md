@@ -134,6 +134,14 @@ pnpm dlx @pilio/gemini-watermark-remover remove <input> --output <file>
 
 👉 **[pilio.ai/image-watermark-remover](https://pilio.ai/image-watermark-remover)**
 
+### 开发者预览
+
+仓库里仍保留了一个本地内部预览页 `/dev-preview.html`，用于单图对比、复制和下载结果验证。
+
+- 这是保留给仓库本地调试使用的内部页面，不是公开产品站点。
+- 根路径 `/` 现在只负责把用户引导到项目官网、userscript 安装地址和内部预览页。
+- 对外使用时，应优先使用官网或 userscript，而不是这个本地预览 harness。
+
 ## 开发
 
 ```bash

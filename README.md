@@ -134,6 +134,14 @@ This tool targets Gemini's visible watermark (the semi-transparent logo in the b
 
 👉 **[pilio.ai/image-watermark-remover](https://pilio.ai/image-watermark-remover)**
 
+### Developer Preview
+
+The repository still keeps a local internal preview harness at `/dev-preview.html` for single-image comparison, copy, and download verification.
+
+- This is a retained internal debugging surface, not the public product website.
+- The root path `/` now only redirects users toward the official website, the userscript artifact, and the internal preview page.
+- Public-facing usage should prefer the official website or the userscript instead of this local preview harness.
+
 ## Development
 
 ```bash

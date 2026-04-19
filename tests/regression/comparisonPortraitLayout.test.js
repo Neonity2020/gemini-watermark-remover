@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..');
-const htmlPath = path.join(repoRoot, 'public', 'index.html');
+const htmlPath = path.join(repoRoot, 'public', 'dev-preview.html');
 
 function getClassListById(html, id) {
   const regex = new RegExp(`<[^>]*id="${id}"[^>]*class="([^"]+)"[^>]*>`, 'i');
