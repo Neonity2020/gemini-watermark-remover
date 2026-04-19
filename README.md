@@ -156,11 +156,6 @@ Notes:
 - The internal browser preview harness lives at `/dev-preview.html`, is now kept as a static Chinese-only single-image compare harness for local algorithm/UI debugging, and no longer maintains public-facing locale or theme-switching features.
 - `pnpm dev` / `pnpm serve` still host the userscript, probe pages, and these static assets.
 
-### Cloudflare Deployment Note
-
-- `wrangler.toml` is the deployment config for the Cloudflare Worker/assets entry of this project.
-- It points Wrangler at the built `dist/` directory and should be kept even if local tests or source imports do not reference it directly.
-
 ### Tampermonkey Debugging on macOS
 
 For the repo's fixed-profile workflow on macOS:
@@ -340,7 +335,6 @@ gemini-watermark-remover/
 ├── tests/                 # Unit, regression, packaging, and smoke tests
 ├── scripts/               # Local automation and debug launchers
 ├── dist/                  # Build output directory
-├── wrangler.toml          # Cloudflare Worker/assets deployment config
 ├── build.js               # Build script
 └── package.json
 ```

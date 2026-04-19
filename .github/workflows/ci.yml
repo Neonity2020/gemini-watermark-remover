@@ -40,6 +40,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Project surface regression
+        run: node --test tests/project/frontendI18nRetirement.test.js tests/project/publicStaticSurfaceRetirement.test.js tests/project/deploymentRetirement.test.js
+
       - name: SDK publish smoke
         run: pnpm test:sdk-smoke
 

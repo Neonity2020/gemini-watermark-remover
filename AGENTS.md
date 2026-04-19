@@ -4,9 +4,8 @@
 
 ## Deployment Note
 
-- `wrangler.toml` is an active project file.
-- This repo is deployed with Cloudflare Worker/assets using Wrangler, with `dist/` as the deployment asset directory.
-- Do not classify `wrangler.toml` as redundant only because it is not imported by app code or covered by local tests.
+- The active local/debugging build surface is the generated `dist/` directory.
+- Keep deployment assumptions aligned with the current repo contents.
 
 ### Fixed Tampermonkey / Gemini Environment
 

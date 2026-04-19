@@ -156,11 +156,6 @@ pnpm serve
 - 内部浏览器预览页位于 `/dev-preview.html`，当前保留为中文静态单图对比 harness，用于本地算法/UI 调试，不再作为对外开发者预览站，也不再维护多语言和主题切换。
 - `pnpm dev` / `pnpm serve` 仍会提供 userscript、probe 页面和这些静态资产。
 
-### Cloudflare 部署说明
-
-- `wrangler.toml` 是这个项目用于 Cloudflare Worker/静态资产入口的部署配置。
-- 它负责让 Wrangler 指向构建后的 `dist/` 目录；即使本地测试或源码导入没有直接引用它，也不应把它当作冗余文件删除。
-
 ### macOS 下调试油猴固定 Profile
 
 如果要走仓库内置的固定 profile 调试流，macOS 下建议直接用：
@@ -340,7 +335,6 @@ gemini-watermark-remover/
 ├── tests/                 # 单元、回归、打包与 smoke 测试
 ├── scripts/               # 本地自动化与调试启动脚本
 ├── dist/                  # 构建输出目录
-├── wrangler.toml          # Cloudflare Worker/静态资产部署配置
 ├── build.js               # 构建脚本
 └── package.json
 ```
