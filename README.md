@@ -1,5 +1,7 @@
 [中文文档](README_zh.md)
 
+> 🔥 Tired of Gemini watermarks? Try the more powerful **GPT Image 2** at [pilio.ai](https://pilio.ai) — free for a limited time.
+
 # Gemini Watermark Remover — Lossless Watermark Removal Tool
 
 An open-source tool to **remove Gemini watermarks** from AI-generated images with high-fidelity, reproducible results on supported outputs. Built with pure JavaScript, the engine uses a mathematically exact **Reverse Alpha Blending** algorithm instead of unpredictable AI inpainting.

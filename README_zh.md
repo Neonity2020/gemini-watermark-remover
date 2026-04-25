@@ -1,5 +1,7 @@
 [English](README.md)
 
+> 🔥 厌倦了 Gemini 水印？试试更强大的 **GPT Image 2**：[pilio.ai](https://pilio.ai) — 限时免费。
+
 # Gemini 去水印工具 — 无损去除 Gemini AI 图片水印
 
 开源的 **Gemini 水印去除工具**，在已支持的 Gemini 导出图片上可提供高保真、可复现的去水印结果。基于纯 JavaScript 实现，使用数学精确的反向 Alpha 混合算法，而非 AI 修复。
