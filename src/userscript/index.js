@@ -64,7 +64,7 @@ function isPreviewReplacementEnabled(targetWindow) {
   }
 }
 
-(async function init() {
+export async function initGeminiWatermarkRemoverUserscript() {
   try {
     const targetWindow = typeof unsafeWindow === 'object' && unsafeWindow
       ? unsafeWindow
@@ -333,4 +333,8 @@ function isPreviewReplacementEnabled(targetWindow) {
   } catch (error) {
     console.error('[Gemini Watermark Remover] Initialization failed:', error);
   }
-})();
+}
+
+if (typeof __GWR_AUTO_INIT_USERSCRIPT__ === 'undefined' || __GWR_AUTO_INIT_USERSCRIPT__) {
+  void initGeminiWatermarkRemoverUserscript();
+}

@@ -33,11 +33,11 @@ test('shared Gemini page-processing modules should live under src/shared instead
   }
 });
 
-test('plugin removal checks should not keep using tests/extension as the active test namespace', () => {
+test('project tests should not keep using tests/extension as the active test namespace', () => {
   assert.equal(
     existsSync(new URL('../../tests/extension', import.meta.url)),
     false,
-    'expected tests/extension to be removed after the plugin cleanup'
+    'expected active extension tests to live under tests/project'
   );
   assert.equal(
     existsSync(new URL('../../tests/project', import.meta.url)),

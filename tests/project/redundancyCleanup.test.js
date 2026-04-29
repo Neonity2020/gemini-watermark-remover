@@ -53,17 +53,13 @@ test('package should not expose removed Chrome extension workflows', () => {
   }
 });
 
-test('build and ci config should not reference removed Chrome extension bundle outputs', () => {
+test('build and ci config should not reference removed legacy Chrome extension workflows', () => {
   const buildScript = readRepoText('build.js');
   const workflow = readRepoText('.github/workflows/ci.yml');
 
   for (const pattern of [
     /src\/extension\/pageHook\.js/,
-    /src\/extension\/contentScript\.js/,
-    /src\/extension\/popup\.js/,
-    /dist\/extension\//,
-    /manifest\.json/,
-    /popup\.html/
+    /src\/extension\/contentScript\.js/
   ]) {
     assert.doesNotMatch(buildScript, pattern);
   }
@@ -97,11 +93,28 @@ test('README files should not document removed Chrome extension workflows', () =
   }
 });
 
-test('removed plugin source directory should not remain as an empty placeholder', () => {
-  assert.equal(
-    existsSync(new URL('../../src/extension', import.meta.url)),
-    false,
-    'expected src/extension to be removed after the plugin cleanup'
+test('extension source directory should contain the active Tampermonkey compatibility adapter only', () => {
+  const extensionFiles = listRelativeFiles(new URL('../../src/extension/', import.meta.url)).sort();
+
+  assert.deepEqual(
+    extensionFiles,
+    [
+      'assets/github.svg',
+      'assets/icon-128.png',
+      'assets/icon-16.png',
+      'assets/icon-32.png',
+      'assets/icon-48.png',
+      'assets/logo-shape.svg',
+      'contentMain.js',
+      'isolatedBridge.js',
+      'messageTypes.js',
+      'popup.css',
+      'popup.html',
+      'popup.js',
+      'serviceWorker.js',
+      'tampermonkeyCompat.js'
+    ],
+    `unexpected active extension files: ${extensionFiles.join(', ')}`
   );
 });
 

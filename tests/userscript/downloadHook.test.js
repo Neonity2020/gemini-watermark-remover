@@ -100,6 +100,58 @@ test('createGeminiDownloadFetchHook should normalize Gemini asset url and replac
   assert.equal(response.headers.get('content-type'), 'image/png');
 });
 
+test('createGeminiDownloadFetchHook should omit credentials when normalizing Request asset urls', async () => {
+  const seenRequests = [];
+  const originalFetch = async (...args) => {
+    seenRequests.push(args);
+    return new Response(new Blob(['original'], { type: 'image/png' }), {
+      status: 200,
+      headers: { 'content-type': 'image/png' }
+    });
+  };
+
+  const hook = createGeminiDownloadFetchHook({
+    originalFetch,
+    isTargetUrl: (url) => url.includes('googleusercontent.com'),
+    normalizeUrl: () => 'https://lh3.googleusercontent.com/rd-gg/token=s0',
+    processBlob: async () => new Blob(['processed'], { type: 'image/png' })
+  });
+
+  await hook(new Request('https://lh3.googleusercontent.com/rd-gg/token=s512', {
+    credentials: 'include'
+  }));
+
+  assert.equal(seenRequests.length, 1);
+  assert.equal(seenRequests[0][0].url, 'https://lh3.googleusercontent.com/rd-gg/token=s0');
+  assert.equal(seenRequests[0][0].credentials, 'omit');
+});
+
+test('createGeminiDownloadFetchHook should omit credentials when normalizing string asset urls with init', async () => {
+  const seenRequests = [];
+  const originalFetch = async (...args) => {
+    seenRequests.push(args);
+    return new Response(new Blob(['original'], { type: 'image/png' }), {
+      status: 200,
+      headers: { 'content-type': 'image/png' }
+    });
+  };
+
+  const hook = createGeminiDownloadFetchHook({
+    originalFetch,
+    isTargetUrl: (url) => url.includes('googleusercontent.com'),
+    normalizeUrl: () => 'https://lh3.googleusercontent.com/rd-gg/token=s0',
+    processBlob: async () => new Blob(['processed'], { type: 'image/png' })
+  });
+
+  await hook('https://lh3.googleusercontent.com/rd-gg/token=s512', {
+    credentials: 'include'
+  });
+
+  assert.equal(seenRequests.length, 1);
+  assert.equal(seenRequests[0][0], 'https://lh3.googleusercontent.com/rd-gg/token=s0');
+  assert.equal(seenRequests[0][1].credentials, 'omit');
+});
+
 test('createGeminiDownloadFetchHook should pass a serializable processing context without the raw Response object', async () => {
   const originalFetch = async () => new Response(new Blob(['original'], { type: 'image/png' }), {
     status: 200,

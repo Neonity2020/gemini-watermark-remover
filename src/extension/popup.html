@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gemini Watermark Remover</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="popup" aria-label="Gemini Watermark Remover">
+      <header class="brand">
+        <span class="logo-wrap" aria-hidden="true">
+          <img src="assets/logo-shape.svg" alt="">
+        </span>
+        <span class="brand-copy">
+          <span class="brand-name">Gemini Watermark Remover</span>
+          <span class="brand-note">自动移除 Gemini 生成图片的水印</span>
+        </span>
+      </header>
+
+      <section class="setting-row" aria-labelledby="enable-label">
+        <div class="setting-text">
+          <div id="enable-label" class="setting-title">在 Gemini 中自动去除</div>
+          <div class="setting-note" id="enable-note">如遇页面异常或卡顿，可先关闭排查</div>
+        </div>
+        <label class="switch" aria-label="在 Gemini 中启用">
+          <input id="enable-toggle" type="checkbox" checked>
+          <span class="switch-track" aria-hidden="true"></span>
+        </label>
+      </section>
+
+      <nav class="quick-links" aria-label="相关链接">
+        <a
+          class="link-row primary-link"
+          href="https://geminiwatermarkremover.io/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="link-copy">
+            <span class="link-title">在线批量去除 Gemini 水印</span>
+            <span class="link-note">无需安装，浏览器内处理本地图片</span>
+          </span>
+        </a>
+        <a
+          class="link-row"
+          href="https://pilio.ai/zh/image-watermark-remover"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="link-copy">
+            <span class="link-title">去除任意图片水印</span>
+            <span class="link-note">使用高级 AI 模型处理更复杂的水印</span>
+          </span>
+        </a>
+      </nav>
+
+      <footer class="footer">
+        <a
+          class="feedback-link"
+          href="https://github.com/GargantuaX/gemini-watermark-remover/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img src="assets/github.svg" alt="" aria-hidden="true">
+          <span>在 GitHub 上反馈问题</span>
+        </a>
+      </footer>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

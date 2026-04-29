@@ -13,18 +13,39 @@ import {
 function buildHookRequestArgs(args, normalizedUrl) {
   const nextArgs = [...args];
   const input = nextArgs[0];
+  const init = nextArgs[1];
 
   if (typeof input === 'string') {
     nextArgs[0] = normalizedUrl;
+    if (init && typeof init === 'object') {
+      nextArgs[1] = {
+        ...init,
+        credentials: 'omit'
+      };
+    }
     return nextArgs;
   }
 
   if (typeof Request !== 'undefined' && input instanceof Request) {
-    nextArgs[0] = new Request(normalizedUrl, input);
+    nextArgs[0] = new Request(new Request(normalizedUrl, input), {
+      credentials: 'omit'
+    });
+    if (init && typeof init === 'object') {
+      nextArgs[1] = {
+        ...init,
+        credentials: 'omit'
+      };
+    }
     return nextArgs;
   }
 
   nextArgs[0] = normalizedUrl;
+  if (init && typeof init === 'object') {
+    nextArgs[1] = {
+      ...init,
+      credentials: 'omit'
+    };
+  }
   return nextArgs;
 }
 
