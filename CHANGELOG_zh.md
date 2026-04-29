@@ -2,6 +2,12 @@
 
 ## 1.0.11 - 2026-04-17
 
+### Chrome 插件
+
+- 新增 Manifest V3 Chrome 插件构建，通过 Tampermonkey 兼容适配层打包共享 userscript runtime。
+- 新增插件弹窗，包含启用开关、官网入口、通用去水印入口和 GitHub issue 反馈入口。
+- 新增版本化插件发布包流程，可生成 zip、sha256 校验文件和 `latest-extension.json`，用于 GitHub Release 和官网下载。
+
 ### SDK
 
 - 新增公共 `runtime-browser` 入口，作为无副作用的浏览器 blob 处理器，供下游页面项目直接复用。
@@ -12,10 +18,12 @@
 
 - 更新了 package exports 与发布白名单，`pnpm pack` 现在会正确包含 runtime 入口及其所需的共享实现文件。
 - 补充了隔离 consumer smoke 覆盖，验证 runtime 子路径可导入，并显式拒绝 `@pilio/gemini-watermark-remover/src/...` 这种深层私有导入。
+- 在中英文 README 中补充 Chrome 插件安装入口，并在发版清单中加入插件产物检查。
 
 ### 质量
 
 - 新增 runtime 回归测试，覆盖浏览器入口的无副作用导入、默认处理选项、脱离实例调用，以及 userscript worker fallback 行为。
+- 新增插件构建、兼容层、弹窗、发布元数据和 README 顺序相关回归覆盖。
 - 已重新完成面向 page/runtime/sdk/package-consumer 的验证，并对 `1.0.11` 做过一次新的发布 dry run。
 
 ## 1.0.10 - 2026-04-07

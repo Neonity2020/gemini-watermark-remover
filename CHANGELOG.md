@@ -2,6 +2,12 @@
 
 ## 1.0.11 - 2026-04-17
 
+### Chrome Extension
+
+- Added a Manifest V3 Chrome extension build that packages the shared userscript runtime through a Tampermonkey-compatible adapter.
+- Added the extension popup with an enable toggle, official website link, general watermark remover link, and GitHub issue feedback entry.
+- Added a versioned extension release package flow that generates a zip, sha256 checksum, and `latest-extension.json` for GitHub Release and official website downloads.
+
 ### SDK
 
 - Added the new public `runtime-browser` entrypoint as a side-effect-free blob processor for downstream browser consumers.
@@ -12,10 +18,12 @@
 
 - Updated package exports and published file allowlists so `pnpm pack` now includes the runtime entrypoints and their required shared implementation files.
 - Added isolated consumer smoke coverage that validates runtime subpath imports and rejects deep private imports from `@pilio/gemini-watermark-remover/src/...`.
+- Documented Chrome extension installation in both README files and added release checklist coverage for extension artifacts.
 
 ### Quality
 
 - Added runtime-focused regression tests for side-effect-free browser imports, default processing options, detached runtime methods, and userscript worker fallback behavior.
+- Added extension build, compatibility, popup, release metadata, and README ordering regression coverage.
 - Re-verified the release with targeted page/runtime/sdk/package-consumer tests and a fresh publish dry run for version `1.0.11`.
 
 ## 1.0.10 - 2026-04-07
