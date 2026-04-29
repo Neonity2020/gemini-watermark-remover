@@ -19,6 +19,8 @@ test('production build should emit a MV3 extension that packages the shared user
 
   const manifest = JSON.parse(await readText('dist/extension/manifest.json'));
   assert.equal(manifest.manifest_version, 3);
+  assert.equal(manifest.name, 'Gemini Watermark Remover');
+  assert.equal(manifest.action.default_title, 'Gemini Watermark Remover');
   assert.equal(manifest.icons['16'], 'assets/icon-16.png');
   assert.equal(manifest.icons['32'], 'assets/icon-32.png');
   assert.equal(manifest.icons['48'], 'assets/icon-48.png');
@@ -55,10 +57,12 @@ test('production build should emit a MV3 extension that packages the shared user
   assert.match(contentMain, /GM_xmlhttpRequest/);
 
   const popupHtml = await readText('dist/extension/popup.html');
+  assert.match(popupHtml, /<html lang="en">/);
   assert.match(popupHtml, /https:\/\/geminiwatermarkremover\.io\//);
-  assert.match(popupHtml, /https:\/\/pilio\.ai\/zh\/image-watermark-remover/);
-  assert.match(popupHtml, /在线批量去除 Gemini 水印/);
-  assert.match(popupHtml, /去除任意图片水印/);
+  assert.match(popupHtml, /https:\/\/pilio\.ai\/image-watermark-remover/);
+  assert.match(popupHtml, /Online Gemini watermark remover/);
+  assert.match(popupHtml, /Remove any image watermark/);
+  assert.match(popupHtml, /Report an issue on GitHub/);
   assert.match(popupHtml, /https:\/\/github\.com\/GargantuaX\/gemini-watermark-remover\/issues/);
   assert.match(popupHtml, /assets\/github\.svg/);
   assert.match(popupHtml, /assets\/logo-shape\.svg/);

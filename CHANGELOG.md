@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.12 - 2026-04-29
+
+### Chrome Extension
+
+- Updated the extension popup to use English copy by default for Chrome Web Store submission.
+- Refined the popup visual design with Apple-style spacing, softer panels, a unified blue accent, inline action icons, and a GitHub feedback entry.
+- Shortened the extension name to `Gemini Watermark Remover` in the Manifest V3 metadata.
+
+### Quality
+
+- Rebuilt the Chrome extension release artifacts and re-verified the extension build, compatibility adapter, and active cleanup coverage.
+
 ## 1.0.11 - 2026-04-17
 
 ### Chrome Extension

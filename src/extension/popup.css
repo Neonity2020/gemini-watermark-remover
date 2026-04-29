@@ -1,23 +1,28 @@
 :root {
   color-scheme: light;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --accent: oklch(0.56 0.23 263);
-  --accent-pressed: oklch(0.49 0.22 263);
-  --surface: oklch(0.985 0.006 255);
-  --panel: oklch(0.999 0.004 255);
-  --panel-subtle: oklch(0.965 0.006 255);
-  --line: oklch(0.9 0.01 255);
-  --text: oklch(0.22 0.025 255);
-  --muted: oklch(0.52 0.02 255);
-  --faint: oklch(0.68 0.016 255);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --accent: #0071e3;
+  --accent-pressed: #005cbf;
+  --surface: #ffffff;
+  --panel: #ffffff;
+  --panel-soft: #fbfbfd;
+  --line: #e5e5ea;
+  --text: #1d1d1f;
+  --muted: #86868b;
+  --faint: #d2d2d7;
+  --accent-tint: #f0f8ff;
+  --accent-tint-strong: #e1f0ff;
+  --shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
 }
 
 html,
 body {
   margin: 0;
-  min-width: 344px;
+  min-width: 420px;
   background: var(--surface);
   color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .popup {
@@ -35,7 +40,7 @@ body {
   align-items: center;
   gap: 14px;
   min-width: 0;
-  padding: 0 2px 20px;
+  padding: 0 4px 18px;
 }
 
 .brand-copy {
@@ -47,12 +52,12 @@ body {
 .brand-name {
   overflow: hidden;
   font-size: 15px;
-  font-weight: 680;
+  font-weight: 600;
   line-height: 1.25;
   color: var(--text);
   text-overflow: ellipsis;
   white-space: nowrap;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.01em;
 }
 
 .brand-note {
@@ -66,44 +71,45 @@ body {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--line);
-  border-radius: 13px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
   background: var(--panel);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .logo-wrap img {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
 }
 
-.setting-row {
+.setting-group {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
   background: var(--panel);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .setting-text {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .setting-title {
-  font-size: 14px;
-  font-weight: 650;
+  font-size: 13.5px;
+  font-weight: 600;
   line-height: 1.35;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .setting-note {
-  margin-top: 4px;
+  margin-top: 3px;
   font-size: 12px;
   line-height: 1.4;
   color: var(--muted);
@@ -127,22 +133,22 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: oklch(0.84 0.012 255);
+  background: #e9e9ea;
   cursor: pointer;
-  transition: background 160ms cubic-bezier(0.25, 1, 0.5, 1);
+  transition: background 250ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .switch-track::after {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 22px;
-  height: 22px;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
   background: var(--panel);
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.24);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.04);
   content: "";
-  transition: transform 160ms cubic-bezier(0.25, 1, 0.5, 1);
+  transition: transform 250ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .switch input:checked + .switch-track {
@@ -154,65 +160,135 @@ body {
 }
 
 .switch input:focus-visible + .switch-track {
-  outline: 2px solid color-mix(in oklch, var(--accent) 40%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
   outline-offset: 2px;
 }
 
 .quick-links {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   margin-top: 14px;
 }
 
 .link-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px 16px;
-  border: 1px solid color-mix(in oklch, var(--line) 76%, var(--panel));
-  border-radius: 14px;
-  background: color-mix(in oklch, var(--panel) 82%, transparent);
+  gap: 14px;
+  min-height: 62px;
+  padding: 15px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  background: var(--panel-soft);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
   color: var(--text);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.4;
   text-decoration: none;
   transition:
-    border-color 150ms cubic-bezier(0.25, 1, 0.5, 1),
-    color 150ms cubic-bezier(0.25, 1, 0.5, 1),
-    transform 150ms cubic-bezier(0.25, 1, 0.5, 1);
+    background-color 200ms ease,
+    color 200ms ease,
+    transform 200ms ease;
 }
 
 .link-row:hover {
-  border-color: color-mix(in oklch, var(--accent) 34%, var(--line));
-  color: var(--accent);
-  transform: translateY(-1px);
+  background: var(--panel);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .link-row:active {
-  color: var(--accent-pressed);
-  transform: translateY(0);
+  background: #f2f2f7;
+  transform: scale(0.98);
 }
 
 .link-row:focus-visible {
-  outline: 2px solid color-mix(in oklch, var(--accent) 40%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
   outline-offset: 2px;
 }
 
 .primary-link {
-  background: color-mix(in oklch, var(--accent) 7%, var(--panel));
-  border-color: color-mix(in oklch, var(--accent) 18%, var(--line));
+  border-color: rgba(0, 113, 227, 0.15);
+  background: var(--accent-tint);
+}
+
+.primary-link:hover {
+  background: white;
+  border-color: rgba(0, 113, 227, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.1);
+}
+
+.primary-link:active {
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.primary-link .chevron {
+  color: var(--accent);
+}
+
+.feature-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: var(--accent-tint-strong);
+  color: var(--accent);
+}
+
+.feature-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.feature-icon-toggle {
+  width: 44px;
+  height: 44px;
+}
+
+.feature-icon-site {
+}
+
+.feature-icon-ai {
 }
 
 .link-copy {
   display: grid;
+  flex: 1 1 auto;
   gap: 3px;
   min-width: 0;
 }
 
+.chevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--faint);
+}
+
+.chevron svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
 .link-title {
-  font-size: 13px;
+  font-size: 13.25px;
+  line-height: 1.25;
 }
 
 .link-note {
@@ -226,7 +302,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 16px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   color: var(--muted);
   font-size: 12px;
   line-height: 1.4;
@@ -235,21 +313,22 @@ body {
 .feedback-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  gap: 7px;
+  padding: 7px 10px;
   border-radius: 8px;
   color: inherit;
-  font-weight: 550;
+  font-weight: 500;
   text-decoration: none;
-  transition: color 150ms cubic-bezier(0.25, 1, 0.5, 1);
+  transition: all 150ms ease;
 }
 
 .feedback-link:hover {
+  background: rgba(0, 0, 0, 0.03);
   color: var(--text);
 }
 
 .feedback-link:focus-visible {
-  outline: 2px solid color-mix(in oklch, var(--accent) 36%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
   outline-offset: 2px;
 }
 
@@ -257,4 +336,10 @@ body {
   width: 14px;
   height: 14px;
   opacity: 0.74;
+}
+
+.footer-chevron {
+  color: var(--muted);
+  width: 14px;
+  height: 14px;
 }

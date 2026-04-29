@@ -55,7 +55,7 @@ const userscriptBanner = `// ==UserScript==
 function writeExtensionManifest() {
   const manifest = {
     manifest_version: 3,
-    name: 'Gemini NanoBanana Watermark Remover',
+    name: 'Gemini Watermark Remover',
     version: pkg.version,
     description: pkg.description,
     author: pkg.author,
@@ -70,7 +70,7 @@ function writeExtensionManifest() {
       'activeTab'
     ],
     action: {
-      default_title: 'Gemini NanoBanana Watermark Remover',
+      default_title: 'Gemini Watermark Remover',
       default_icon: {
         16: 'assets/icon-16.png',
         32: 'assets/icon-32.png',
