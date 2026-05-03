@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository currently ships three release surfaces:
+This repository currently ships four release surfaces:
 
 - website build in `dist/`
 - userscript bundle in `dist/userscript/gemini-watermark-remover.user.js`
@@ -49,15 +49,52 @@ Expected result:
 
 - commit release changes
 - create a git tag matching the package version, for example `v1.0.1`
-- publish or upload the built userscript from `dist/userscript/gemini-watermark-remover.user.js`
+- create a GitHub Release from that tag and upload the built userscript from `dist/userscript/gemini-watermark-remover.user.js`
 - upload `dist/releases/gemini-watermark-remover-extension-v<version>.zip`, its `.sha256.txt` file, and `latest-extension.json` to GitHub Release
-- mirror the same Chrome extension release files to the official website download directory for users who cannot access GitHub or Chrome Web Store reliably
-- deploy website assets from `dist/` if the online entry changed
 - publish the sdk package only if this release includes package-facing changes
+
+Example GitHub Release command:
+
+```bash
+gh release create v<version> \
+  dist/userscript/gemini-watermark-remover.user.js \
+  dist/releases/gemini-watermark-remover-extension-v<version>.zip \
+  dist/releases/gemini-watermark-remover-extension-v<version>.zip.sha256.txt \
+  dist/releases/latest-extension.json \
+  --repo GargantuaX/gemini-watermark-remover \
+  --title "v<version>" \
+  --notes "<release notes>" \
+  --latest
+```
+
+## Official Website Sync
+
+The public website is maintained in the separate local project `D:\Project\geminiwatermarkremover.io`.
+
+After the GitHub Release is published:
+
+1. Run `pnpm run userscript:build` in the website project.
+   - This rebuilds this upstream repository.
+   - It copies `dist/userscript/gemini-watermark-remover.user.js` to `public/userscript/gemini-watermark-remover.user.js`.
+2. Download the exact Chrome extension assets from the GitHub Release into the website project:
+   - `gemini-watermark-remover-extension-v<version>.zip`
+   - `gemini-watermark-remover-extension-v<version>.zip.sha256.txt`
+   - `latest-extension.json`
+3. Copy those files to `public/downloads/`.
+4. Update `src/i18n/chrome-extension-content.ts` to match `latest-extension.json`.
+5. Remove stale older extension zip and checksum files from `public/downloads/`.
+6. Run `pnpm test` and `pnpm run build` in the website project.
+7. Deploy with `pnpm run deploy:cf-workers`.
+
+`pnpm run deploy:cf-workers` may finish the Cloudflare deployment successfully and then report a Sentry release finalization error. If Wrangler prints a current version ID and the live site verifies correctly, treat the website deployment as published, then investigate Sentry separately.
 
 ## Post-Release
 
 - confirm the installed userscript reports the expected version
-- confirm the hosted install link serves the latest userscript bundle
+- confirm the GitHub Release latest userscript serves the latest bundle:
+  `https://github.com/GargantuaX/gemini-watermark-remover/releases/latest/download/gemini-watermark-remover.user.js`
+- confirm the official website serves the latest userscript bundle:
+  `https://geminiwatermarkremover.io/userscript/gemini-watermark-remover.user.js`
 - confirm the official website serves the latest Chrome extension zip and matching checksum
+- confirm `https://geminiwatermarkremover.io/downloads/latest-extension.json` reports the latest extension version, file, size, and sha256
 - keep any ad hoc verification notes in the release PR or tag notes, not in source docs

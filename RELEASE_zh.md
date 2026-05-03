@@ -2,7 +2,7 @@
 
 ## 发布面
 
-当前仓库有三个发布面：
+当前仓库有四个发布面：
 
 - 网站构建产物：`dist/`
 - 油猴脚本产物：`dist/userscript/gemini-watermark-remover.user.js`
@@ -49,15 +49,52 @@ pnpm package:extension
 
 - 提交版本相关改动
 - 创建与版本号一致的 git tag，例如 `v1.0.1`
-- 发布或上传 `dist/userscript/gemini-watermark-remover.user.js`
+- 基于该 tag 创建 GitHub Release，并上传 `dist/userscript/gemini-watermark-remover.user.js`
 - 上传 `dist/releases/gemini-watermark-remover-extension-v<version>.zip`、对应 `.sha256.txt` 和 `latest-extension.json` 到 GitHub Release
-- 将同一组 Chrome 插件安装包文件同步到官网下载目录，服务无法稳定访问 GitHub 或 Chrome Web Store 的用户
-- 如果在线站点入口有变更，同步部署 `dist/` 下的网站产物
 - 只有本次涉及 package 对外接口时，才同步发布 sdk/package
+
+GitHub Release 命令示例：
+
+```bash
+gh release create v<version> \
+  dist/userscript/gemini-watermark-remover.user.js \
+  dist/releases/gemini-watermark-remover-extension-v<version>.zip \
+  dist/releases/gemini-watermark-remover-extension-v<version>.zip.sha256.txt \
+  dist/releases/latest-extension.json \
+  --repo GargantuaX/gemini-watermark-remover \
+  --title "v<version>" \
+  --notes "<release notes>" \
+  --latest
+```
+
+## 官网同步
+
+官网项目位于独立本地目录：`D:\Project\geminiwatermarkremover.io`。
+
+GitHub Release 发布后：
+
+1. 在官网项目中运行 `pnpm run userscript:build`。
+   - 该命令会重新构建当前上游仓库。
+   - 然后把 `dist/userscript/gemini-watermark-remover.user.js` 复制到 `public/userscript/gemini-watermark-remover.user.js`。
+2. 从 GitHub Release 下载准确的 Chrome 插件发布资产到官网项目：
+   - `gemini-watermark-remover-extension-v<version>.zip`
+   - `gemini-watermark-remover-extension-v<version>.zip.sha256.txt`
+   - `latest-extension.json`
+3. 将这些文件复制到 `public/downloads/`。
+4. 更新 `src/i18n/chrome-extension-content.ts`，使其与 `latest-extension.json` 保持一致。
+5. 从 `public/downloads/` 删除旧版本 zip 和 checksum 文件。
+6. 在官网项目中运行 `pnpm test` 和 `pnpm run build`。
+7. 使用 `pnpm run deploy:cf-workers` 部署官网。
+
+`pnpm run deploy:cf-workers` 可能已经成功完成 Cloudflare 部署，但最后报告 Sentry release finalize 错误。如果 Wrangler 打印了当前 version ID，并且线上站点验证通过，应先把官网部署视为已发布，再单独排查 Sentry。
 
 ## 发布后检查
 
 - 确认浏览器里已安装的 userscript 显示正确版本号
-- 确认线上安装链接返回的是最新 userscript 产物
+- 确认 GitHub Release latest userscript 返回最新产物：
+  `https://github.com/GargantuaX/gemini-watermark-remover/releases/latest/download/gemini-watermark-remover.user.js`
+- 确认官网返回最新 userscript 产物：
+  `https://geminiwatermarkremover.io/userscript/gemini-watermark-remover.user.js`
 - 确认官网提供的是最新 Chrome 插件 zip，且校验值一致
+- 确认 `https://geminiwatermarkremover.io/downloads/latest-extension.json` 返回最新插件版本、文件名、体积和 sha256
 - 临时性的验证记录放到 release note 或 PR 里，不继续堆在仓库文档中
