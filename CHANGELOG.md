@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.14 - 2026-05-03
+
+### Userscript
+
+- Switched userscript auto-update metadata to the GitHub Release `latest/download` permalink so the update endpoint is controlled by the published release assets.
+
+### Quality
+
+- Updated regression coverage to pin the release-backed userscript auto-update URL.
+
 ## 1.0.13 - 2026-05-03
 
 ### Userscript

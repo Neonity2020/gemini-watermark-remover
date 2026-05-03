@@ -1,5 +1,15 @@
 # 更新日志
 
+## 1.0.14 - 2026-05-03
+
+### 油猴脚本
+
+- 将 userscript 自动更新元信息切换到 GitHub Release `latest/download` 固定链接，确保更新端点由已发布的 release 资产控制。
+
+### 质量
+
+- 更新回归测试，锁定基于 release 的 userscript 自动更新地址。
+
 ## 1.0.13 - 2026-05-03
 
 ### 油猴脚本
